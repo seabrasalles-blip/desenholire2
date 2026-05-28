@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
+import paintLogo from "@/assets/paint-logo.png";
+
 import {
   Brush,
   Pencil,

@@ -1051,10 +1051,10 @@ function ToolButton({
           : "bg-white hover:bg-amber-100"
       }`}
     >
-      <span className={`text-amber-700 ${active ? "scale-110" : ""}`}>
+      <span className={`text-amber-700 [&_svg]:w-5 [&_svg]:h-5 ${active ? "scale-110" : ""}`}>
         {icon}
       </span>
-      <span className="text-[11px] font-semibold text-slate-700 leading-tight">{label}</span>
+      <span className="text-[10px] font-semibold text-slate-700 leading-tight">{label}</span>
     </button>
   );
 }

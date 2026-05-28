@@ -79,6 +79,8 @@ const TOOLS: { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean
   { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
   { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
   { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
+  { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
+  { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
 ];
 
 // ---------- Page ----------

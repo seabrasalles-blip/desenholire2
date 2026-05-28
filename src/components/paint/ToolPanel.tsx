@@ -30,7 +30,7 @@ export function ToolPanel({
   useEffect(() => setMounted(true), []);
 
   useLayoutEffect(() => {
-    if (!anchorEl || !panelRef.current) return;
+    if (!mounted || !anchorEl || !panelRef.current) return;
 
     const compute = () => {
       const el = panelRef.current;
@@ -45,18 +45,15 @@ export function ToolPanel({
       let left = a.right + GAP;
       let centered = false;
       if (left + pw > vw - MARGIN) {
-        // Try left of anchor
         const leftSide = a.left - GAP - pw;
         if (leftSide >= MARGIN) {
           left = leftSide;
         } else {
-          // Center as floating mini-modal
           left = Math.max(MARGIN, (vw - pw) / 2);
           centered = true;
         }
       }
 
-      // Vertical: align to anchor top, clamp inside viewport
       let top = a.top;
       if (centered) {
         top = Math.max(MARGIN, (vh - ph) / 2);
@@ -69,13 +66,16 @@ export function ToolPanel({
     };
 
     compute();
+    // Re-measure after the next frame in case fonts/icons shift size.
+    const raf = requestAnimationFrame(compute);
     window.addEventListener("resize", compute);
     window.addEventListener("scroll", compute, true);
     return () => {
+      cancelAnimationFrame(raf);
       window.removeEventListener("resize", compute);
       window.removeEventListener("scroll", compute, true);
     };
-  }, [anchorEl, width, children]);
+  }, [mounted, anchorEl, width, children]);
 
   useEffect(() => {
     const onDown = (e: PointerEvent) => {

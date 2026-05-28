@@ -1,72 +1,77 @@
-# Paint Infantil — Plano de Implementação
+# Ajustes de UI do Paint Infantil
 
-Aplicação web React + Canvas, em português, otimizada para crianças em desktop e tablet.
+Objetivo: eliminar rolagem na barra lateral, transformar Carimbos/Formas em painéis flutuantes, adicionar ferramenta de Texto e reorganizar a barra inferior com paleta + ações.
 
-## Estrutura
+## 1. Barra lateral principal (sem rolagem)
 
-- Projeto web (TanStack Start, template padrão).
-- Página única `/` com:
-  - Faixa superior: título "Solte a imaginação e crie seu desenho!"
-  - Barra de ferramentas (topo em desktop, lateral adaptativa em tablet).
-  - Paleta de 8 cores + botão "Cor surpresa".
-  - Área central de desenho (Canvas branco, ocupa maior parte da tela).
-  - Barra de ações: Desfazer, Limpar, Imprimir.
+Lateral esquerda exibe somente os 8 botões grandes de ferramentas, distribuídos verticalmente sem `overflow-y-auto`:
 
-## Ferramentas (estado global simples via hook)
+`Pincel · Lápis · Tinta · Borracha · Carimbos · Mágico · Formas · Texto`
 
-1. **Pincel** — linhas suaves, 3 espessuras (fino/médio/grosso) mostradas como 3 círculos.
-2. **Lápis** — traço com leve textura (jitter de opacidade/posição para simular giz).
-3. **Tinta (balde)** — flood fill em pixels do canvas com tolerância moderada (~32).
-4. **Borracha** — desenha em branco, 3 tamanhos.
-5. **Carimbos** — estrela, coração, flor, sol, lua, carinha feliz, borboleta, foguete (emoji ou SVG simples desenhado no canvas no clique/toque).
-6. **Mágico** — pincel arco-íris (matiz HSL avança a cada ponto).
-7. **Formas** — círculo, quadrado, triângulo, retângulo, preenchidas com a cor ativa (clique-arrasta para definir tamanho; preview em camada temporária).
+Os sub-pickers contextuais (tamanho do pincel/borracha, escolha de carimbo/forma, tamanho do texto) saem da coluna e passam a aparecer como **painéis flutuantes** ao lado do botão ativo.
 
-## Paleta
+## 2. Painéis flutuantes (Carimbos, Formas, Texto, Tamanhos)
 
-- 8 botões grandes: vermelho, azul, amarelo, verde, laranja, roxo, branco, preto.
-- Cor ativa destacada com borda animada.
-- "Cor surpresa": sorteia cor aleatória (HSL aleatório), aplica e destaca.
+- Posicionados absolutamente à direita do botão clicado (`left: 100%` da aside, top alinhado ao botão).
+- Visual: fundo branco, `rounded-2xl`, sombra suave, borda âmbar clara, padding generoso, botões grandes (≥56px).
+- Conteúdo:
+  - **Carimbos** — grid 4×2 com os 8 emojis (estrela, coração, flor, sol, lua, feliz, borboleta, foguete).
+  - **Formas** — grid 2×2 (círculo, quadrado, triângulo, retângulo).
+  - **Texto** — três botões de tamanho: Pequeno / Médio / Grande.
+  - **Pincel/Mágico** e **Borracha** — também migram para painel flutuante com os 3 tamanhos.
+- Comportamento:
+  - Abre ao selecionar a ferramenta correspondente.
+  - Ao escolher uma opção (carimbo/forma/tamanho), o painel fecha automaticamente e a ferramenta permanece ativa.
+  - Fecha ao clicar fora (listener global em `pointerdown` que ignora cliques no botão da ferramenta e no próprio painel).
+  - Fecha ao trocar para outra ferramenta.
+  - A opção atual fica destacada (ring âmbar).
 
-## Ações
+## 3. Ferramenta Texto
 
-- **Desfazer**: pilha de snapshots (`ImageData` ou `toDataURL`) salvos após cada ação concluída (pincelada, carimbo, forma, borracha, balde). Limite ~30 estados.
-- **Limpar**: modal de confirmação "Quer apagar todo o desenho?" com "Sim, apagar" / "Não, voltar".
-- **Imprimir**: abre janela com apenas a imagem do canvas (`toDataURL`) e dispara `window.print()`; CSS `@media print` esconde UI como fallback.
+- Novo tipo `Tool = ... | "texto"`.
+- Estado novo: `textSize: "pequeno" | "medio" | "grande"` (24 / 40 / 64 px).
+- Fonte: `"Nunito", "Comic Sans MS", system-ui, sans-serif` (sem serifa, arredondada).
+- Fluxo:
+  1. Criança seleciona Texto → painel flutuante mostra os 3 tamanhos.
+  2. Ao clicar no canvas, abre um pequeno overlay posicionado no ponto clicado: `<input>` arredondado + botão ✓ Confirmar e ✕ Cancelar. Enter confirma, Esc cancela.
+  3. Ao confirmar, desenha o texto no canvas com `ctx.fillStyle = color`, `ctx.font = "${size}px Nunito,..."`, `textBaseline = "top"`. `pushUndo()` antes do desenho.
+- O texto vira parte do bitmap → aparece corretamente na impressão (que já usa `toDataURL`).
+- Enquanto o overlay de digitação estiver aberto, desativar os handlers normais de pointer no canvas.
 
-## Detalhes técnicos do Canvas
+## 4. Barra inferior (recursos de apoio)
 
-- Canvas redimensionado ao container com `devicePixelRatio` para traços nítidos.
-- Eventos unificados via Pointer Events (`pointerdown/move/up`), `touch-action: none` para evitar rolagem.
-- Traços suaves: `lineCap/lineJoin = round`, interpolação entre pontos com `quadraticCurveTo`.
-- Camada de preview separada (segundo canvas sobreposto) para formas durante o arrasto.
-- Snapshot salvo no `pointerup` / após carimbo / após balde.
+A faixa abaixo do canvas agrupa, da esquerda para a direita:
 
-## Estilo
+`[Paleta de 8 cores]  [Cor surpresa 🎲]   |   [Desfazer]  [Limpar]  [Imprimir]`
 
-- Tailwind: fundo suave (creme), botões grandes arredondados (`rounded-2xl`), sombras leves, ícones lucide-react, fonte sans (Nunito ou padrão).
-- Feedback visual: botão ativo com escala 1.05, borda colorida, leve glow.
-- Sem sons, animações mínimas.
+- Mesma linha em desktop/tablet; em telas estreitas, quebra em duas linhas (`flex-wrap`).
+- Botões grandes com ícone + rótulo em português (mantém o padrão atual).
+- Remove os botões de ação que hoje ficam embaixo do canvas separados — tudo num único rodapé.
 
-## Arquivos principais
+## 5. Layout responsivo
 
-```
-src/
-  routes/index.tsx          # layout da página
-  components/
-    PaintCanvas.tsx         # canvas + lógica de desenho/undo
-    Toolbar.tsx             # ferramentas + espessuras
-    ColorPalette.tsx        # 8 cores + surpresa
-    ActionBar.tsx           # desfazer/limpar/imprimir
-    ConfirmDialog.tsx       # modal limpar
-    StampPicker.tsx         # grid de carimbos
-    ShapePicker.tsx         # grid de formas
-  lib/
-    floodFill.ts            # algoritmo balde
-    drawing.ts              # helpers (pincel, lápis, formas, carimbos)
-    usePaintState.ts        # hook de estado (ferramenta, cor, tamanho, undo stack)
-```
+- Aside fixa em `w-24` (mobile) / `w-28` (md) — apenas ícone+rótulo, 8 botões cabem sem rolagem em 600px de altura.
+- Painel flutuante usa `position: absolute` dentro de um wrapper relativo na aside, com `z-30`; largura ~220px para não cobrir muito do canvas.
+- Em viewports muito baixos, painel ganha `max-height` e rolagem interna própria (não a barra inteira).
 
-## Critérios de aceitação
+## 6. Detalhes técnicos
 
-Criança consegue: escolher cor, desenhar com pincel/lápis, apagar, carimbar, inserir formas, usar cor surpresa, desfazer, limpar (com confirmação) e imprimir somente o desenho.
+Arquivo alterado: `src/routes/index.tsx` (único arquivo da página; mantém arquitetura atual sem fragmentar em vários componentes para reduzir risco).
+
+- Novo estado `openPanel: Tool | null` controla qual painel flutuante está aberto.
+- `setTool(t)` passa a abrir o painel se `t ∈ {pincel, lapis(?), borracha, carimbo, forma, magico, texto}` que tenham opções; ferramentas sem opções (lápis, tinta) fecham qualquer painel.
+- `useEffect` registra listener `pointerdown` no `document` para fechar o painel ao clicar fora (`ref` no painel + `ref` na aside).
+- Novo componente local `FloatingPanel` (function dentro do arquivo) que renderiza o card com título e children.
+- Novo overlay local `TextInputOverlay` posicionado em coordenadas do canvas.
+- Adicionar import de ícone `Type` do lucide-react para o botão Texto.
+- Função `drawText(ctx, text, x, y, size, color)` adicionada junto às outras primitivas.
+- `pushUndo()` chamado antes de inserir texto, carimbo ou forma — comportamento já existente é preservado.
+
+## Critério de aceitação
+
+- Barra lateral nunca apresenta rolagem em viewports ≥ 600px de altura.
+- Clicar em Carimbos/Formas abre painel ao lado, não empurra botões.
+- Escolher carimbo/forma fecha o painel e mantém ferramenta ativa.
+- Clicar fora do painel ou em outra ferramenta o fecha.
+- Texto pode ser inserido em 3 tamanhos, na cor ativa, e sai na impressão.
+- Paleta, cor surpresa, desfazer, limpar e imprimir ficam todos no rodapé, acessíveis sem rolar.

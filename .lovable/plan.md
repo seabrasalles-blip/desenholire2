@@ -1,91 +1,118 @@
-# Atualização visual do Paint infantil
+# Evolução do Paint infantil — Ateliê de Desenho
 
-Aplicar a identidade visual do portal ao Paint, mantendo a usabilidade infantil e todas as funcionalidades atuais (ferramentas, seleção, carimbos, formas, texto, tesoura, paleta de cores do aluno).
+Trabalho de UI/UX no frontend. Nenhuma mudança de backend. Toda a interface continua em Poppins e na paleta institucional (#00113C, #0035BB, #004ECC, #1B6CA7, #DC8F20, #A000A0).
 
-## 1. Tokens de design (`src/styles.css`)
+## 1. Tela inicial (Splash)
 
-Adicionar variáveis institucionais em `oklch` no `:root`:
+Novo componente `WelcomeScreen` renderizado em `src/routes/index.tsx` enquanto `started === false`. Ao clicar em **Começar**, `setStarted(true)` revela o canvas e a barra de ferramentas (sem mudança de rota — preserva o estado do canvas).
 
-- `--brand-navy: #00113C` → textos, títulos, labels principais
-- `--brand-blue: #0035BB` → botões primários, bordas ativas
-- `--brand-blue-accent: #004ECC` → hover/focus, destaques de navegação
-- `--brand-blue-mid: #1B6CA7` → bordas suaves, estados secundários
-- `--brand-orange: #DC8F20` → ferramenta selecionada, foco, chamadas de atenção
-- `--brand-purple: #A000A0` → detalhes lúdicos pontuais
-- `--brand-bg: #F5F8FF` (azul muito claro) → fundo geral da app
-- `--brand-panel: #FFFFFF` → painéis flutuantes
+Conteúdo (espelha a imagem de referência):
+- Título "Ateliê de" (azul escuro) + "Desenho" (azul intenso), Poppins 700.
+- Subtítulo roxo: "Solte a imaginação e crie seu desenho!"
+- Apoio cinza-azul: "Escolha uma ferramenta, uma cor e comece a desenhar."
+- Botão grande "Começar" (fundo `#0035BB`, texto branco, ícone seta, cantos pílula, sombra azul suave).
+- Card "Desafio de hoje: desenhe algo que te faz feliz!" com ícone de sol e lápis.
+- Lado direito: ilustração da paleta (nova arte, item 3) + decorativos (giz roxo, coração laranja, estrelinha, lápis azul, formas).
+- Fundo `#F5F8FF` com sutil gradiente; cantos arredondados; sombras suaves.
+- Logo da paleta (novo asset) no canto superior esquerdo.
+- Responsivo: em telas <900px, coluna única (texto em cima, ilustração embaixo ou reduzida). Em <500px, esconder decorativos secundários.
 
-Remapear tokens semânticos do shadcn (`--background`, `--foreground`, `--primary`, `--accent`, `--border`, `--ring`) para os novos tokens, de modo que componentes existentes herdem o tema sem edição individual.
+Botões "Galeria" e "Configurações" do mock ficam **fora do escopo** (não há funcionalidade) — omitidos para não prometer recursos inexistentes.
 
-## 2. Tipografia Poppins
+## 2. Novo ícone/ilustração da paleta
 
-- Adicionar `<link>` para Google Fonts Poppins (300/400/500/600/700) em `src/routes/__root.tsx` (dentro do `head()`).
-- No `@theme inline` de `src/styles.css`: `--font-sans: "Poppins", system-ui, sans-serif;` e aplicar `font-family: var(--font-sans)` no `body`.
-- Garantir Poppins em todos os textos da UI do Paint: nomes de ferramentas, botões, mensagens, títulos, campo de texto e confirmações.
+Gerar `src/assets/paint-logo.png` (transparente) — paleta arredondada em tons de azul (#0035BB, #1B6CA7, #004ECC, #00113C) com gotas coloridas, sem mão, sem texto. Usar pequeno no header do canvas e maior na tela inicial.
 
-## 3. Ícone da paleta (logo)
+## 3. Reorganização da barra de ferramentas
 
-- Copiar `user-uploads://pinturapaletapequeno.png` para `src/assets/paint-logo.png`.
-- Usar no cabeçalho do Paint ao lado do título (substituindo/realçando o ícone atual). Mantém aparência azul institucional.
-- Também referenciar em `public/favicon.ico` opcional (manter atual se preferir simplicidade — escopo: só cabeçalho).
+Agrupar com pequenos rótulos (texto `#1B6CA7`, uppercase, 10px Poppins 600) + separadores finos:
 
-## 4. Estrutura visual em `src/routes/index.tsx`
+```text
+DESENHAR
+  Pincel · Lápis · Mágico · Borracha
+CRIAR
+  Tinta · Carimbos · Formas · Texto
+EDITAR
+  Selecionar · Tesoura
+```
 
-Sem mudar lógica — apenas classes/estilos.
+Ações finais (Cor surpresa, Desfazer, Limpar, Imprimir, **Salvar**) saem da lateral e vão para uma **barra inferior** ao lado da paleta de cores, evitando rolagem vertical na sidebar.
 
-### Header
-- Fundo `--brand-navy` com texto branco; logo da paleta + título em Poppins 600.
+Largura da sidebar mantida; em 698×606 (viewport atual do usuário) cabe sem scroll.
 
-### Sidebar de ferramentas
-- Fundo branco, borda direita em `--brand-blue-mid` 20%.
-- `ToolButton`:
-  - Default: fundo branco, ícone `--brand-blue`, label `--brand-navy`, borda transparente, `rounded-2xl`, sombra suave.
-  - Hover/focus: borda `--brand-blue-accent`, ícone `--brand-blue-accent`.
-  - Active (selecionado): fundo `#FFF2E0` (laranja muito claro), borda 2px `--brand-orange`, ícone e label `--brand-orange`, sombra mais marcada.
-- Garantir contraste AA e mantê-los grandes (já são; manter tamanhos atuais).
+## 4. Painéis flutuantes para Carimbos e Formas
 
-### Painéis flutuantes (Carimbos, Formas, Texto, Seleção/Recolor)
-- Fundo branco, borda 1px `--brand-blue-mid`, `rounded-2xl`, sombra `0 10px 30px -10px rgba(0,17,60,0.25)`.
-- Título em `--brand-navy` Poppins 600.
-- Itens internos: hover com fundo `--brand-bg`; selecionado com borda/ring 2px `--brand-orange`.
-- Botões de tamanho do Texto (pequeno/médio/grande): mesmo padrão de `ToolButton`.
+Hoje os submenus expandem dentro da sidebar. Trocar por `Popover` flutuante posicionado à direita do botão ativo:
+- Fundo branco, borda `#1B6CA7`/20, raio 16px, sombra `0 10px 30px -10px rgba(0,17,60,.25)`.
+- Grade 4 colunas de botões grandes (56×56).
+- Fecha ao selecionar opção, ao clicar fora, ou ao trocar de ferramenta.
+- Carimbos: estrela, coração, flor, sol, lua, carinha feliz, borboleta, foguete (já existem os 4 primeiros; adicionar lua, carinha, borboleta, foguete em `src/lib/stamps.ts`).
+- Formas: círculo, quadrado, triângulo, retângulo.
+- Item selecionado: ring 2px `#DC8F20`.
 
-### Paleta de cores do aluno (footer)
-- Mantém swatches coloridos livres (cores de desenho intactas).
-- Container com fundo branco, borda superior `--brand-blue-mid` 30%.
-- Swatch selecionado: ring 3px `--brand-orange` + leve `scale`.
-- Botões auxiliares (Surpresa, Desfazer, Limpar, Imprimir): mesmo estilo institucional dos `ToolButton`. "Imprimir" pode usar `--brand-blue` como primário cheio, texto branco. "Limpar" usa borda `--brand-orange` (alerta suave) sem virar destrutivo agressivo.
+## 5. Microinstrução da ferramenta ativa
 
-### Caixa de texto (overlay) e mensagens
-- Borda 2px `--brand-blue-accent`, fundo branco, texto `--brand-navy` em Poppins.
-- Botão Confirmar: fundo `--brand-orange`, texto branco. Cancelar: outline `--brand-blue`.
+Faixa fina acima do canvas: ícone da ferramenta + frase curta.
+Fundo `#F5F8FF`, texto `#00113C` Poppins 500, raio 12px.
+Map ferramenta→frase conforme a lista do brief (Pincel/Lápis/Mágico/Borracha/Tinta/Carimbos/Formas/Texto/Selecionar/Tesoura).
 
-### Canvas
-- Borda 2px `--brand-blue-mid`, `rounded-2xl`, sombra suave. Fundo branco mantido.
+## 6. Renomear "Surpresa" → "Cor surpresa"
 
-### Marching ants (seleção)
-- Trocar para tracejado `--brand-orange` sobre contorno `--brand-navy` para destaque claro.
+Trocar label do botão. Comportamento atual (sortear cor e marcar como ativa) já atende; só garantir que o swatch ativo receba `ring-2 ring-[#DC8F20]` claro após sorteio.
 
-### Toque lúdico (roxo, moderação)
-- Pequenos detalhes: ícone do título lateral, badge de "Surpresa", ou underline do título — apenas 1–2 usos pontuais.
+## 7. Caixa de texto — correção de posicionamento
 
-## 5. Arquivos afetados
+Hoje a caixa pode aparecer cortada perto das margens. Adicionar clamp ao calcular `left/top` do overlay:
 
-- `src/styles.css` — tokens + Poppins + remapeamento semântico
-- `src/routes/__root.tsx` — `<link>` Google Fonts no `head()`
-- `src/routes/index.tsx` — classes/estilos de header, sidebar, painéis, paleta, overlay de texto, canvas, marching ants
-- `src/assets/paint-logo.png` — novo (copiado do upload)
+```text
+const W = textBoxWidth, H = textBoxHeight, M = 8
+left = clamp(clickX, M, canvasW - W - M)
+top  = clickY + H + M > canvasH ? clickY - H - M : clickY
+top  = clamp(top, M, canvasH - H - M)
+```
 
-## 6. Não alterado
+Aplicar em mouse e touch. Fonte da caixa e do texto renderizado: Poppins. Texto pintado também respeita `canvasW/H` (clampar `x` final).
 
-- Toda a lógica de desenho, seleção, recolor, tesoura, carimbos, formas, texto, undo, impressão.
-- Estrutura responsiva já ajustada (no-scroll a 698×606).
-- Cores disponíveis para o aluno desenhar permanecem variadas.
+## 8. Salvar imagem (PNG)
 
-## 7. Critério de sucesso
+Novo botão "Salvar" na barra inferior:
+- `canvas.toBlob('image/png')` → download via `<a download="desenho.png">`.
+- Exporta apenas o canvas (sem UI).
+- Preserva tudo já desenhado (carimbos, formas, texto, pintura).
 
-- Header azul-marinho com logo da paleta e título Poppins.
-- Botões e painéis brancos com bordas azuis, ícones azuis, selecionado em laranja, texto em azul escuro.
-- Toda UI em Poppins.
-- Paleta de desenho intacta e grande.
-- Boa legibilidade e contraste; nenhuma regressão funcional.
+## 9. Limpar — confirmação infantil
+
+Substituir `confirm()` nativo por `AlertDialog` (shadcn):
+- Pergunta: "Quer apagar todo o desenho?"
+- Botões: "Sim, apagar" (outline laranja) / "Não, quero continuar" (azul primário).
+- Botão "Limpar" na sidebar com peso visual reduzido (outline, não preenchido) para evitar cliques acidentais.
+
+## 10. Imprimir — só o desenho
+
+Já é via `window.print()` com `@media print`. Garantir CSS de impressão:
+- `body * { visibility: hidden }` + `#paint-canvas, #paint-canvas * { visibility: visible }`.
+- Centralizar com `margin:auto`, `max-width:100%`.
+
+## 11. Acessibilidade / usabilidade
+
+- Todos os botões com `aria-label` + label textual visível.
+- Foco visível: `focus-visible:ring-2 ring-[#DC8F20]`.
+- Tap targets ≥44px.
+- `touch-action: none` no canvas (já existe) — manter.
+- `h-dvh` no layout principal.
+
+## Arquivos afetados
+
+- `src/routes/index.tsx` — splash, reagrupamento, popovers, microinstrução, salvar, AlertDialog, clamp do texto, rename "Cor surpresa", barra inferior de ações.
+- `src/lib/stamps.ts` — adicionar lua, carinha feliz, borboleta, foguete.
+- `src/assets/paint-logo.png` — nova ilustração da paleta.
+- `src/assets/welcome-illustration.png` — ilustração principal da splash (paleta grande + materiais).
+- `src/styles.css` — pequenos ajustes de tokens se necessário; CSS de impressão.
+
+## Fora de escopo
+
+Galeria, Configurações, persistência de desenhos, contas de usuário, backend. O botão Salvar baixa PNG localmente.
+
+## Critério de sucesso
+
+Abre na splash → "Começar" leva ao canvas; ferramentas agrupadas (Desenhar/Criar/Editar); Carimbos/Formas em popover sem rolagem; caixa de texto nunca corta; "Cor surpresa" no lugar de "Surpresa"; Salvar baixa PNG; Limpar pede confirmação amigável; Imprimir exporta só o desenho; tudo em Poppins e paleta institucional; responsivo em 698×606 e maiores.

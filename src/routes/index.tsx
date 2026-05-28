@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import paintLogo from "@/assets/paint-logo.png";
+import welcomeIllustration from "@/assets/welcome-illustration.png";
 
 import {
   Brush,
@@ -14,6 +15,8 @@ import {
   Trash2,
   Printer,
   Dices,
+  Download,
+  ArrowRight,
   Circle,
   Square,
   Triangle,
@@ -30,16 +33,17 @@ import { STAMPS, drawStamp, type StampId } from "@/lib/stamps";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Paint Infantil — Solte a imaginação!" },
+      { title: "Ateliê de Desenho — Paint Infantil" },
       {
         name: "description",
         content:
-          "Aplicativo de pintura infantil: desenhe, carimbe, use cores e imprima seu desenho.",
+          "Ateliê de Desenho: aplicativo de pintura infantil educacional. Desenhe, carimbe, use cores e salve seu desenho.",
       },
     ],
   }),
   component: PaintPage,
 });
+
 
 // ---------- Configuration ----------
 type Tool =
@@ -73,18 +77,51 @@ const TEXT_SIZES: Record<TextSize, number> = { pequeno: 24, medio: 40, grande: 6
 const TEXT_FONT = '"Poppins",system-ui,sans-serif';
 
 
-const TOOLS: { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean }[] = [
-  { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
-  { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
-  { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
-  { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
-  { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
-  { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
-  { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
-  { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
-  { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
-  { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
+type ToolMeta = { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean };
+
+const TOOL_GROUPS: { title: string; tools: ToolMeta[] }[] = [
+  {
+    title: "Desenhar",
+    tools: [
+      { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
+      { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
+      { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
+      { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
+    ],
+  },
+  {
+    title: "Criar",
+    tools: [
+      { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
+      { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
+      { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
+      { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
+    ],
+  },
+  {
+    title: "Editar",
+    tools: [
+      { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
+      { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
+    ],
+  },
 ];
+
+const TOOLS: ToolMeta[] = TOOL_GROUPS.flatMap((g) => g.tools);
+
+const MICRO_HINTS: Record<Tool, string> = {
+  pincel: "Você escolheu: Pincel. Arraste no desenho para pintar.",
+  lapis: "Você escolheu: Lápis. Arraste para fazer traços finos.",
+  magico: "Você escolheu: Mágico. Arraste para pintar com várias cores.",
+  borracha: "Você escolheu: Borracha. Arraste para apagar partes do desenho.",
+  tinta: "Você escolheu: Tinta. Toque em uma área fechada para preencher.",
+  carimbo: "Você escolheu: Carimbos. Escolha um carimbo e toque no desenho.",
+  forma: "Você escolheu: Formas. Escolha uma forma e toque no desenho.",
+  texto: "Você escolheu: Texto. Toque onde quer escrever.",
+  selecionar: "Você escolheu: Selecionar. Marque uma parte para mover ou mudar a cor.",
+  tesoura: "Você escolheu: Tesoura. Marque uma parte para recortar.",
+};
+
 
 // ---------- Page ----------
 function PaintPage() {
@@ -103,6 +140,8 @@ function PaintPage() {
   const [shape, setShape] = useState<Shape>("circulo");
   const [textSize, setTextSize] = useState<TextSize>("medio");
   const [confirmClear, setConfirmClear] = useState(false);
+  const [started, setStarted] = useState(false);
+
 
   const [openPanel, setOpenPanel] = useState<Tool | null>(null);
   const [panelTop, setPanelTop] = useState(0);
@@ -711,6 +750,24 @@ function PaintPage() {
     w.document.close();
   };
 
+  // ---------- Save image (PNG download) ----------
+  const handleSave = () => {
+    commitSelection();
+    const canvas = canvasRef.current!;
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `desenho-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+  };
+
+
   // ---------- Surprise color ----------
   const surpriseColor = () => {
     const hue = Math.floor(Math.random() * 360);
@@ -874,13 +931,19 @@ function PaintPage() {
     );
   };
 
+  if (!started) {
+    return <WelcomeScreen onStart={() => setStarted(true)} />;
+  }
+
   return (
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#F5F8FF]">
+
+    <div className="flex h-dvh w-screen flex-col overflow-hidden bg-[#F5F8FF]">
+
       {/* Header */}
       <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden">
         <img src={paintLogo} alt="" className="h-7 w-7" />
         <h1 className="text-lg md:text-xl font-semibold tracking-tight">
-          Solte a imaginação e crie seu desenho!
+          Ateliê de Desenho
         </h1>
       </header>
 
@@ -888,22 +951,36 @@ function PaintPage() {
         {/* Toolbar */}
         <aside
           ref={asideRef}
-          className="relative flex flex-col gap-1 w-20 md:w-24 print:hidden"
+          className="relative flex flex-col gap-1.5 w-20 md:w-24 print:hidden overflow-y-auto"
         >
-          {TOOLS.map((t) => (
-            <ToolButton
-              key={t.id}
-              icon={t.icon}
-              label={t.label}
-              active={tool === t.id}
-              onClick={(ev) => selectTool(t.id, ev)}
-            />
+          {TOOL_GROUPS.map((group, gi) => (
+            <div key={group.title} className="flex flex-col gap-1">
+              {gi > 0 && <div className="h-px bg-[#C9D7EC] mx-1 my-1" />}
+              <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none">
+                {group.title}
+              </p>
+              {group.tools.map((t) => (
+                <ToolButton
+                  key={t.id}
+                  icon={t.icon}
+                  label={t.label}
+                  active={tool === t.id}
+                  onClick={(ev) => selectTool(t.id, ev)}
+                />
+              ))}
+            </div>
           ))}
           {renderPanel()}
         </aside>
 
         {/* Canvas area */}
         <main className="flex-1 flex flex-col gap-2 min-w-0">
+          {/* Microinstruction */}
+          <div className="rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1.5 text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden">
+            <Sparkles className="w-4 h-4 text-[#DC8F20] shrink-0" />
+            <span className="truncate">{MICRO_HINTS[tool]}</span>
+          </div>
+
           <div
             ref={containerRef}
             className="relative flex-1 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
@@ -1001,7 +1078,8 @@ function PaintPage() {
                 onClick={surpriseColor}
                 className="h-10 px-3 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-sm"
               >
-                <Dices className="h-4 w-4" /> Surpresa
+                <Dices className="h-4 w-4" /> Cor surpresa
+
               </button>
               <div
                 className="h-10 w-10 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
@@ -1013,11 +1091,13 @@ function PaintPage() {
 
             <div className="h-8 w-px bg-[#C9D7EC] hidden md:block" />
 
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 flex-wrap">
               <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
               <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
-              <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="primary" />
+              <ActionButton onClick={handleSave} icon={<Download />} label="Salvar" variant="primary" />
+              <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="secondary" />
             </div>
+
           </div>
         </main>
       </div>
@@ -1040,7 +1120,8 @@ function PaintPage() {
                 onClick={() => setConfirmClear(false)}
                 className="rounded-xl border-2 border-[#0035BB] text-[#0035BB] hover:bg-[#E6EEFB] font-semibold px-5 py-3"
               >
-                Não, voltar
+                Não, quero continuar
+
               </button>
             </div>
           </div>
@@ -1114,6 +1195,74 @@ function ActionButton({
       {icon}
       {label}
     </button>
+  );
+}
+
+// ---------- Welcome / splash screen ----------
+function WelcomeScreen({ onStart }: { onStart: () => void }) {
+  return (
+    <div className="min-h-dvh w-full flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-[#F5F8FF] via-white to-[#E6EEFB]">
+      <div className="w-full max-w-5xl rounded-3xl bg-white shadow-[0_20px_60px_-20px_rgba(0,17,60,0.25)] border border-[#E6EEFB] overflow-hidden">
+        <div className="grid md:grid-cols-2 gap-4 p-6 sm:p-8 md:p-10 items-center">
+          {/* Left: text + CTA */}
+          <div className="flex flex-col gap-4 md:gap-5 order-2 md:order-1">
+            <div className="flex items-center gap-2">
+              <div className="w-12 h-12 rounded-2xl bg-[#E6EEFB] flex items-center justify-center shadow-sm">
+                <img src={paintLogo} alt="" className="w-9 h-9" />
+              </div>
+            </div>
+            <div>
+              <h1 className="font-bold leading-[0.95] tracking-tight">
+                <span className="block text-3xl sm:text-4xl md:text-5xl text-[#00113C]">
+                  Ateliê de
+                </span>
+                <span className="block text-4xl sm:text-5xl md:text-6xl text-[#0035BB]">
+                  Desenho
+                </span>
+              </h1>
+            </div>
+            <p className="text-[#A000A0] font-semibold text-base sm:text-lg">
+              Solte a imaginação e crie seu desenho!
+            </p>
+            <p className="text-[#1B6CA7] text-sm sm:text-base">
+              Escolha uma ferramenta, uma cor<br className="hidden sm:inline" /> e comece a desenhar.
+            </p>
+            <button
+              onClick={onStart}
+              className="group mt-2 inline-flex items-center justify-between gap-3 self-start rounded-full bg-[#0035BB] hover:bg-[#002a96] text-white font-semibold px-6 py-4 sm:px-8 sm:py-5 text-base sm:text-lg shadow-[0_10px_25px_-8px_rgba(0,53,187,0.6)] transition-transform hover:scale-[1.02] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#DC8F20]"
+              aria-label="Começar a desenhar"
+            >
+              <span className="pl-2">Começar</span>
+              <span className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-[#0035BB] group-hover:translate-x-0.5 transition-transform">
+                <ArrowRight className="w-5 h-5" />
+              </span>
+            </button>
+
+            {/* Challenge card */}
+            <div className="mt-2 flex items-center gap-3 rounded-2xl bg-[#FFF8EE] border border-[#F4DCB0] p-3 sm:p-4 shadow-sm">
+              <div className="w-10 h-10 rounded-xl bg-[#FFF2DC] flex items-center justify-center text-xl shrink-0">
+                ☀️
+              </div>
+              <div className="text-sm leading-snug">
+                <p className="font-bold text-[#DC8F20]">Desafio de hoje:</p>
+                <p className="text-[#00113C]">desenhe algo que te faz feliz!</p>
+              </div>
+              <Pencil className="hidden sm:block w-5 h-5 text-[#DC8F20] ml-auto shrink-0" />
+            </div>
+          </div>
+
+          {/* Right: illustration */}
+          <div className="order-1 md:order-2 flex items-center justify-center relative">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,53,187,0.08),transparent_70%)] rounded-full" />
+            <img
+              src={welcomeIllustration}
+              alt="Ilustração de paleta de pintura e materiais"
+              className="relative w-full max-w-sm md:max-w-md drop-shadow-[0_15px_25px_rgba(0,17,60,0.15)]"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

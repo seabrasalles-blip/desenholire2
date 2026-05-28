@@ -154,6 +154,28 @@ function PaintPage() {
     return () => document.removeEventListener("pointerdown", handler);
   }, [openPanel]);
 
+  // ---------- Clamp text input overlay inside canvas ----------
+  useLayoutEffect(() => {
+    if (!textInput) return;
+    const container = containerRef.current;
+    const box = textBoxRef.current;
+    if (!container || !box) return;
+    const PAD = 8;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const bw = box.offsetWidth;
+    const bh = box.offsetHeight;
+    const maxLeft = Math.max(PAD, cw - bw - PAD);
+    const maxTop = Math.max(PAD, ch - bh - PAD);
+    let left = Math.min(Math.max(textInput.x, PAD), maxLeft);
+    let top = textInput.y - 4;
+    if (textInput.y + bh + PAD > ch) {
+      top = Math.max(PAD, textInput.y - bh - PAD);
+    }
+    top = Math.min(Math.max(top, PAD), maxTop);
+    setTextBoxPos({ left, top });
+  }, [textInput]);
+
   // ---------- Undo helpers ----------
   const pushUndo = useCallback(() => {
     const canvas = canvasRef.current!;

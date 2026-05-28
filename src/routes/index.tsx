@@ -406,11 +406,19 @@ function PaintPage() {
     if (value) {
       pushUndo();
       const ctx = canvasRef.current!.getContext("2d")!;
+      const container = containerRef.current!;
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const PAD = 8;
       ctx.save();
       ctx.fillStyle = color;
       ctx.font = `bold ${TEXT_SIZES[textSize]}px ${TEXT_FONT}`;
       ctx.textBaseline = "top";
-      ctx.fillText(value, textInput.x, textInput.y);
+      const textW = ctx.measureText(value).width;
+      const textH = TEXT_SIZES[textSize];
+      const drawX = Math.min(Math.max(textInput.x, PAD), Math.max(PAD, cw - textW - PAD));
+      const drawY = Math.min(Math.max(textInput.y, PAD), Math.max(PAD, ch - textH - PAD));
+      ctx.fillText(value, drawX, drawY);
       ctx.restore();
     }
     setTextInput(null);

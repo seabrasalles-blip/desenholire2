@@ -876,7 +876,7 @@ function PaintPage() {
         {/* Toolbar */}
         <aside
           ref={asideRef}
-          className="relative flex flex-col gap-1.5 w-20 md:w-24 print:hidden"
+          className="relative flex flex-col gap-1 w-20 md:w-24 print:hidden"
         >
           {TOOLS.map((t) => (
             <ToolButton

@@ -1120,7 +1120,8 @@ function PaintPage() {
                 onClick={() => setConfirmClear(false)}
                 className="rounded-xl border-2 border-[#0035BB] text-[#0035BB] hover:bg-[#E6EEFB] font-semibold px-5 py-3"
               >
-                Não, voltar
+                Não, quero continuar
+
               </button>
             </div>
           </div>

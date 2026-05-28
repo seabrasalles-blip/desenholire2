@@ -1,114 +1,91 @@
-## Objetivo
+# Atualização visual do Paint infantil
 
-Permitir que a criança selecione uma região retangular do desenho para mover, recolorir ou recortar — tudo integrado com o Desfazer existente.
+Aplicar a identidade visual do portal ao Paint, mantendo a usabilidade infantil e todas as funcionalidades atuais (ferramentas, seleção, carimbos, formas, texto, tesoura, paleta de cores do aluno).
 
-## Novas ferramentas na sidebar
+## 1. Tokens de design (`src/styles.css`)
 
-Adicionar à lista `TOOLS` em `src/routes/index.tsx`:
+Adicionar variáveis institucionais em `oklch` no `:root`:
 
-- `selecionar` — ícone `MousePointerSquareDashed` (lucide), rótulo "Selecionar", sem painel.
-- `tesoura` — ícone `Scissors`, rótulo "Tesoura", sem painel.
+- `--brand-navy: #00113C` → textos, títulos, labels principais
+- `--brand-blue: #0035BB` → botões primários, bordas ativas
+- `--brand-blue-accent: #004ECC` → hover/focus, destaques de navegação
+- `--brand-blue-mid: #1B6CA7` → bordas suaves, estados secundários
+- `--brand-orange: #DC8F20` → ferramenta selecionada, foco, chamadas de atenção
+- `--brand-purple: #A000A0` → detalhes lúdicos pontuais
+- `--brand-bg: #F5F8FF` (azul muito claro) → fundo geral da app
+- `--brand-panel: #FFFFFF` → painéis flutuantes
 
-A sidebar passa de 8 para 10 ferramentas. Para evitar rolagem em telas pequenas (698×606), reduzir levemente a altura/padding dos botões e/ou usar grid 2 colunas dentro da sidebar quando necessário. Paleta de cores, Cor surpresa, Desfazer, Limpar e Imprimir continuam no rodapé.
+Remapear tokens semânticos do shadcn (`--background`, `--foreground`, `--primary`, `--accent`, `--border`, `--ring`) para os novos tokens, de modo que componentes existentes herdem o tema sem edição individual.
 
-## Modelo de estado
+## 2. Tipografia Poppins
 
-Novo estado em `PaintPage`:
+- Adicionar `<link>` para Google Fonts Poppins (300/400/500/600/700) em `src/routes/__root.tsx` (dentro do `head()`).
+- No `@theme inline` de `src/styles.css`: `--font-sans: "Poppins", system-ui, sans-serif;` e aplicar `font-family: var(--font-sans)` no `body`.
+- Garantir Poppins em todos os textos da UI do Paint: nomes de ferramentas, botões, mensagens, títulos, campo de texto e confirmações.
 
-```ts
-type Selection = {
-  // retângulo de origem no canvas (em px do canvas, já normalizado)
-  sx: number; sy: number; sw: number; sh: number;
-  // deslocamento atual em relação à origem
-  dx: number; dy: number;
-  // bitmap recortado da área original (ImageData -> canvas offscreen)
-  bitmap: HTMLCanvasElement;
-  // se já "cortamos" o original do canvas (true após começar a arrastar/cortar)
-  lifted: boolean;
-};
+## 3. Ícone da paleta (logo)
 
-const [selection, setSelection] = useState<Selection | null>(null);
-const [selectDrag, setSelectDrag] = useState<
-  | { mode: "creating"; startX: number; startY: number }
-  | { mode: "moving"; grabDx: number; grabDy: number }
-  | null
->(null);
-```
+- Copiar `user-uploads://pinturapaletapequeno.png` para `src/assets/paint-logo.png`.
+- Usar no cabeçalho do Paint ao lado do título (substituindo/realçando o ícone atual). Mantém aparência azul institucional.
+- Também referenciar em `public/favicon.ico` opcional (manter atual se preferir simplicidade — escopo: só cabeçalho).
 
-A seleção vive numa camada visual sobreposta ao canvas (um segundo `<canvas>` posicionado absoluto sobre o canvas principal, mesmo tamanho), para não modificar o bitmap principal enquanto a criança arrasta.
+## 4. Estrutura visual em `src/routes/index.tsx`
 
-## Fluxos
+Sem mudar lógica — apenas classes/estilos.
 
-### Criar seleção (ferramenta `selecionar`)
+### Header
+- Fundo `--brand-navy` com texto branco; logo da paleta + título em Poppins 600.
 
-1. `pointerdown` no canvas → `selectDrag = { creating, startX, startY }`; limpar `selection` anterior (commitando primeiro, ver abaixo).
-2. `pointermove` → desenhar retângulo pontilhado (marching ants) na camada overlay.
-3. `pointerup` → normalizar retângulo, clamp aos limites do canvas, ignorar se área < 4×4 px. Capturar `ImageData` da região para o `bitmap` offscreen. NÃO recortar do canvas ainda (lifted=false) — assim recolorir sem mover não cria buraco.
+### Sidebar de ferramentas
+- Fundo branco, borda direita em `--brand-blue-mid` 20%.
+- `ToolButton`:
+  - Default: fundo branco, ícone `--brand-blue`, label `--brand-navy`, borda transparente, `rounded-2xl`, sombra suave.
+  - Hover/focus: borda `--brand-blue-accent`, ícone `--brand-blue-accent`.
+  - Active (selecionado): fundo `#FFF2E0` (laranja muito claro), borda 2px `--brand-orange`, ícone e label `--brand-orange`, sombra mais marcada.
+- Garantir contraste AA e mantê-los grandes (já são; manter tamanhos atuais).
 
-### Mover seleção
+### Painéis flutuantes (Carimbos, Formas, Texto, Seleção/Recolor)
+- Fundo branco, borda 1px `--brand-blue-mid`, `rounded-2xl`, sombra `0 10px 30px -10px rgba(0,17,60,0.25)`.
+- Título em `--brand-navy` Poppins 600.
+- Itens internos: hover com fundo `--brand-bg`; selecionado com borda/ring 2px `--brand-orange`.
+- Botões de tamanho do Texto (pequeno/médio/grande): mesmo padrão de `ToolButton`.
 
-- `pointerdown` dentro do retângulo da seleção (com ferramenta `selecionar` ainda ativa) → empurrar `pushHistory()`; se `!lifted`, pintar a região original de branco no canvas principal e marcar `lifted=true`. Começar `moving`.
-- `pointermove` → atualizar `dx,dy`; clamp para que `sx+dx ∈ [0, canvasW - sw]` e idem em Y.
-- `pointerup` → permanece selecionado no novo local (sem commitar ainda; commit acontece no "finalizar").
+### Paleta de cores do aluno (footer)
+- Mantém swatches coloridos livres (cores de desenho intactas).
+- Container com fundo branco, borda superior `--brand-blue-mid` 30%.
+- Swatch selecionado: ring 3px `--brand-orange` + leve `scale`.
+- Botões auxiliares (Surpresa, Desfazer, Limpar, Imprimir): mesmo estilo institucional dos `ToolButton`. "Imprimir" pode usar `--brand-blue` como primário cheio, texto branco. "Limpar" usa borda `--brand-orange` (alerta suave) sem virar destrutivo agressivo.
 
-### Recolorir seleção (clique numa cor da paleta enquanto há seleção)
+### Caixa de texto (overlay) e mensagens
+- Borda 2px `--brand-blue-accent`, fundo branco, texto `--brand-navy` em Poppins.
+- Botão Confirmar: fundo `--brand-orange`, texto branco. Cancelar: outline `--brand-blue`.
 
-Quando `selection` existe e o usuário escolhe uma cor:
+### Canvas
+- Borda 2px `--brand-blue-mid`, `rounded-2xl`, sombra suave. Fundo branco mantido.
 
-1. `pushHistory()`.
-2. No `bitmap` offscreen, percorrer pixels: para cada pixel com `alpha > 0` e que NÃO seja branco puro/quase-branco (limiar simples: `r>240 && g>240 && b>240`), substituir RGB pela cor escolhida mantendo o alpha. Isso preserva contornos e evita pintar o "fundo branco" da seleção.
-3. Redesenhar overlay. Seleção continua ativa.
+### Marching ants (seleção)
+- Trocar para tracejado `--brand-orange` sobre contorno `--brand-navy` para destaque claro.
 
-Importante: a seleção da cor pela paleta passa a ter duplo comportamento — se houver `selection`, recolorir; senão, comportamento atual (definir `color`).
+### Toque lúdico (roxo, moderação)
+- Pequenos detalhes: ícone do título lateral, badge de "Surpresa", ou underline do título — apenas 1–2 usos pontuais.
 
-### Cortar (ferramenta `tesoura`)
+## 5. Arquivos afetados
 
-Comportamento simples e estável: **funciona em conjunto com a seleção**.
+- `src/styles.css` — tokens + Poppins + remapeamento semântico
+- `src/routes/__root.tsx` — `<link>` Google Fonts no `head()`
+- `src/routes/index.tsx` — classes/estilos de header, sidebar, painéis, paleta, overlay de texto, canvas, marching ants
+- `src/assets/paint-logo.png` — novo (copiado do upload)
 
-- Se já existe `selection`: clicar em `tesoura` → `pushHistory()`; se `!lifted`, pintar a área original de branco; descartar `bitmap`; `selection = null`.
-- Se não existe seleção e a criança clica em `tesoura`: a ferramenta vira ativa e funciona igual à `selecionar` para criar o retângulo, mas no `pointerup` já apaga a área (pinta de branco), sem deixar seleção ativa. Um único gesto = recortar.
+## 6. Não alterado
 
-### Finalizar seleção
+- Toda a lógica de desenho, seleção, recolor, tesoura, carimbos, formas, texto, undo, impressão.
+- Estrutura responsiva já ajustada (no-scroll a 698×606).
+- Cores disponíveis para o aluno desenhar permanecem variadas.
 
-A seleção é "comitada" no canvas principal (desenhar `bitmap` em `sx+dx, sy+dy`) e `selection` vira `null` quando:
+## 7. Critério de sucesso
 
-- a criança clica fora do retângulo da seleção (no canvas), OU
-- escolhe outra ferramenta, OU
-- usa Limpar / Imprimir / Desfazer.
-
-O commit em si não cria novo `pushHistory` (o histórico já foi salvo quando o lift ou o recolor aconteceu). Se a seleção nunca foi modificada (sem move, sem recolor), descarta sem alterar o canvas e sem mexer no histórico.
-
-## Integração com Desfazer
-
-`pushHistory()` (que já existe e salva `ImageData` do canvas) é chamado:
-
-- ao começar a mover (no momento do "lift");
-- ao recolorir;
-- ao cortar (tanto via tesoura+seleção quanto via tesoura+retângulo direto).
-
-Desfazer já restaura o `ImageData`; basta também limpar `selection` ao desfazer para evitar inconsistência visual.
-
-## Cuidados técnicos
-
-- Clamp do retângulo de seleção e do movimento aos limites do canvas (0..W, 0..H).
-- Coordenadas vêm do mesmo helper de `pointer -> canvas px` já usado pelas outras ferramentas (respeita devicePixelRatio).
-- Pointer events apenas no elemento canvas/overlay; overlay com `pointer-events: none` exceto quando ferramenta é `selecionar`/`tesoura` (na verdade, podemos manter os eventos no canvas principal e desenhar o overlay por cima sem capturar eventos — mais simples).
-- Suporte a toque: usar pointer events (já é o padrão do projeto).
-- Marching ants: `setLineDash([6,4])` + `lineDashOffset` animado via `requestAnimationFrame` enquanto `selection` existir.
-
-## Arquivos afetados
-
-- `src/routes/index.tsx` — toda a lógica acima, novas ferramentas, novo overlay canvas, branch de paleta para recolorir, integração com undo/limpar/imprimir/trocar ferramenta.
-
-Nenhum novo arquivo necessário. Sem mudanças de backend.
-
-## Critério de aceitação
-
-- Selecionar → arrastar retângulo → borda pontilhada animada aparece.
-- Arrastar a seleção move o pedaço; origem fica branca; movimento limitado ao canvas.
-- Com seleção ativa, clicar numa cor recolore apenas os traços (não o branco).
-- Tesoura sozinha: arrastar retângulo apaga aquela área.
-- Tesoura com seleção ativa: apaga a área selecionada.
-- Desfazer reverte mover, recolorir e cortar.
-- Trocar de ferramenta ou clicar fora finaliza a seleção sem perder o resultado.
-- Sem rolagem na sidebar em 698×606.
+- Header azul-marinho com logo da paleta e título Poppins.
+- Botões e painéis brancos com bordas azuis, ícones azuis, selecionado em laranja, texto em azul escuro.
+- Toda UI em Poppins.
+- Paleta de desenho intacta e grande.
+- Boa legibilidade e contraste; nenhuma regressão funcional.

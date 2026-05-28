@@ -2,6 +2,8 @@
 @source "../src";
 @import "tw-animate-css";
 
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap");
+
 @custom-variant dark (&:is(.dark *));
 
 /*
@@ -19,8 +21,10 @@
  */
 
 @theme inline {
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+@theme inline {
+  --font-sans: "Poppins", system-ui, -apple-system, sans-serif;
+  --font-display: "Poppins", system-ui, sans-serif;
+
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 8px);
@@ -62,40 +66,51 @@
 }
 
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
+  /* Brand palette (portal institutional) */
+  --brand-navy: #00113C;
+  --brand-blue: #0035BB;
+  --brand-blue-accent: #004ECC;
+  --brand-blue-mid: #1B6CA7;
+  --brand-orange: #DC8F20;
+  --brand-purple: #A000A0;
+  --brand-bg: #F5F8FF;
+  --brand-panel: #FFFFFF;
+
+  --radius: 0.75rem;
+  --background: #F5F8FF;
+  --foreground: #00113C;
+  --card: #FFFFFF;
+  --card-foreground: #00113C;
+  --popover: #FFFFFF;
+  --popover-foreground: #00113C;
+  --primary: #0035BB;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E6EEFB;
+  --secondary-foreground: #00113C;
+  --muted: #EAF0F9;
+  --muted-foreground: #1B6CA7;
+  --accent: #DC8F20;
+  --accent-foreground: #FFFFFF;
+  --destructive: #DC8F20;
+  --destructive-foreground: #FFFFFF;
+  --border: #C9D7EC;
+  --input: #C9D7EC;
+  --ring: #DC8F20;
+  --chart-1: #0035BB;
+  --chart-2: #1B6CA7;
+  --chart-3: #004ECC;
+  --chart-4: #DC8F20;
+  --chart-5: #A000A0;
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #00113C;
+  --sidebar-primary: #0035BB;
+  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-accent: #DC8F20;
+  --sidebar-accent-foreground: #FFFFFF;
+  --sidebar-border: #C9D7EC;
+  --sidebar-ring: #DC8F20;
 }
+
 
 .dark {
   --background: oklch(0.129 0.042 264.695);
@@ -140,5 +155,7 @@
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
+    font-family: "Poppins", system-ui, -apple-system, sans-serif;
   }
+
 }

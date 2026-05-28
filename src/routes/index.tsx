@@ -1090,11 +1090,13 @@ function PaintPage() {
 
             <div className="h-8 w-px bg-[#C9D7EC] hidden md:block" />
 
-            <div className="flex items-center justify-center gap-2">
+            <div className="flex items-center justify-center gap-2 flex-wrap">
               <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
               <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
-              <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="primary" />
+              <ActionButton onClick={handleSave} icon={<Download />} label="Salvar" variant="primary" />
+              <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="secondary" />
             </div>
+
           </div>
         </main>
       </div>

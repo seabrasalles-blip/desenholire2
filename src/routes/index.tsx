@@ -232,7 +232,8 @@ function PaintPage() {
       }
       pctx.save();
       pctx.lineWidth = 2;
-      pctx.strokeStyle = "#0ea5e9";
+      pctx.strokeStyle = "#DC8F20";
+
       pctx.setLineDash([6, 4]);
       pctx.lineDashOffset = -dashOffsetRef.current;
       pctx.strokeRect(sel.sx + sel.dx + 0.5, sel.sy + sel.dy + 0.5, sel.sw - 1, sel.sh - 1);
@@ -246,7 +247,8 @@ function PaintPage() {
       const h = Math.abs(sd.curY - sd.startY);
       pctx.save();
       pctx.lineWidth = 2;
-      pctx.strokeStyle = sd.forCut ? "#ef4444" : "#0ea5e9";
+      pctx.strokeStyle = sd.forCut ? "#A000A0" : "#DC8F20";
+
       pctx.setLineDash([6, 4]);
       pctx.strokeRect(x + 0.5, y + 0.5, w, h);
       pctx.restore();

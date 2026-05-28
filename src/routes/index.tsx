@@ -750,6 +750,23 @@ function PaintPage() {
     w.document.close();
   };
 
+  // ---------- Save image (PNG download) ----------
+  const handleSave = () => {
+    commitSelection();
+    const canvas = canvasRef.current!;
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `desenho-${Date.now()}.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }, "image/png");
+
+
   // ---------- Surprise color ----------
   const surpriseColor = () => {
     const hue = Math.floor(Math.random() * 360);

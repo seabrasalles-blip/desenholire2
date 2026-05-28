@@ -70,35 +70,24 @@ const TEXT_FONT = '"Poppins",system-ui,sans-serif';
 
 type ToolMeta = { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean };
 
-const TOOL_GROUPS: { title: string; tools: ToolMeta[] }[] = [
-  {
-    title: "Desenhar",
-    tools: [
-      { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
-      { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
-      { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
-      { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
-    ],
-  },
-  {
-    title: "Criar",
-    tools: [
-      { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
-      { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
-      { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
-      { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
-    ],
-  },
-  {
-    title: "Editar",
-    tools: [
-      { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
-      { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
-    ],
-  },
+const LEFT_TOOLS: ToolMeta[] = [
+  { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
+  { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
+  { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
+  { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
+  { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
+  { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
+  { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
+  { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
 ];
 
-const TOOLS: ToolMeta[] = TOOL_GROUPS.flatMap((g) => g.tools);
+const RIGHT_TOOLS: ToolMeta[] = [
+  { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
+  { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
+];
+
+const TOOLS: ToolMeta[] = [...LEFT_TOOLS, ...RIGHT_TOOLS];
+
 
 const MICRO_HINTS: Record<Tool, string> = {
   pincel: "Você escolheu: Pincel. Arraste no desenho para pintar.",
@@ -937,43 +926,38 @@ function PaintPage() {
         </h1>
       </header>
 
-      <div className="flex flex-1 min-h-0 gap-2 px-2 pb-2 pt-2 overflow-hidden">
-        {/* Toolbar */}
+      <div className="flex flex-1 min-h-0 gap-2 px-2 pt-2 overflow-hidden">
+        {/* Left sidebar — criação */}
         <aside
           ref={asideRef}
           className="relative flex flex-col gap-1 w-16 md:w-20 print:hidden min-h-0 overflow-y-auto shrink-0"
         >
-          {TOOL_GROUPS.map((group, gi) => (
-            <div key={group.title} className="flex flex-col gap-1">
-              {gi > 0 && <div className="h-px bg-[#C9D7EC] mx-1 my-0.5" />}
-              <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
-                {group.title}
-              </p>
-              {group.tools.map((t) => (
-                <ToolButton
-                  key={t.id}
-                  icon={t.icon}
-                  label={t.label}
-                  active={tool === t.id}
-                  onClick={(ev) => selectTool(t.id, ev)}
-                />
-              ))}
-            </div>
+          <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
+            Criar
+          </p>
+          {LEFT_TOOLS.map((t) => (
+            <ToolButton
+              key={t.id}
+              icon={t.icon}
+              label={t.label}
+              active={tool === t.id}
+              onClick={(ev) => selectTool(t.id, ev)}
+            />
           ))}
         </aside>
         {renderPanel()}
 
-        {/* Canvas area */}
-        <main className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0">
+        {/* Canvas area (centered, constrained width) */}
+        <main className="flex-1 flex flex-col items-center gap-1.5 min-w-0 min-h-0">
           {/* Microinstruction */}
-          <div className="rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1 text-xs md:text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden shrink-0 max-h-[600px]:hidden">
+          <div className="w-full max-w-[min(65%,900px)] rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1 text-xs md:text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden shrink-0 max-h-[600px]:hidden">
             <Sparkles className="w-4 h-4 text-[#DC8F20] shrink-0" />
             <span className="truncate">{MICRO_HINTS[tool]}</span>
           </div>
 
           <div
             ref={containerRef}
-            className="relative flex-1 min-h-0 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
+            className="relative w-full max-w-[min(65%,900px)] flex-1 min-h-0 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
             id="paint-canvas-container"
           >
             <canvas
@@ -1043,52 +1027,71 @@ function PaintPage() {
               </div>
             )}
           </div>
-
-          {/* Bottom support bar: palette + actions */}
-          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl bg-white border-2 border-[#C9D7EC] px-2 py-1.5 print:hidden shrink-0">
-            <div className="flex flex-wrap items-center justify-center gap-1.5">
-              {COLORS.map((c) => (
-                <button
-                  key={c.hex}
-                  onClick={() => {
-                    setColor(c.hex);
-                    if (selectionRef.current) recolorSelection(c.hex);
-                  }}
-                  aria-label={c.name}
-                  title={c.name}
-                  className={`h-8 w-8 rounded-full shadow-md transition-transform ${
-                    color === c.hex
-                      ? "ring-4 ring-[#DC8F20] scale-110"
-                      : "ring-2 ring-[#C9D7EC] hover:scale-105"
-                  }`}
-                  style={{ backgroundColor: c.hex }}
-                />
-              ))}
-              <button
-                onClick={surpriseColor}
-                className="h-8 px-2.5 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-xs"
-              >
-                <Dices className="h-3.5 w-3.5" /> Cor surpresa
-              </button>
-              <div
-                className="h-8 w-8 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
-                style={{ backgroundColor: color }}
-                aria-label="Cor atual"
-                title="Cor atual"
-              />
-            </div>
-
-            <div className="h-7 w-px bg-[#C9D7EC] hidden md:block" />
-
-            <div className="flex items-center justify-center gap-1.5 flex-wrap">
-              <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
-              <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
-              <ActionButton onClick={handleSave} icon={<Download />} label="Salvar" variant="primary" />
-              <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="secondary" />
-            </div>
-          </div>
         </main>
+
+        {/* Right sidebar — edição */}
+        <aside
+          className="relative flex flex-col gap-1 w-16 md:w-20 print:hidden min-h-0 overflow-y-auto shrink-0"
+        >
+          <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
+            Editar
+          </p>
+          {RIGHT_TOOLS.map((t) => (
+            <ToolButton
+              key={t.id}
+              icon={t.icon}
+              label={t.label}
+              active={tool === t.id}
+              onClick={(ev) => selectTool(t.id, ev)}
+            />
+          ))}
+        </aside>
       </div>
+
+      {/* Bottom support bar: palette + actions (full width) */}
+      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mx-2 mb-2 mt-2 rounded-2xl bg-white border-2 border-[#C9D7EC] px-2 py-1.5 print:hidden shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-1.5">
+          {COLORS.map((c) => (
+            <button
+              key={c.hex}
+              onClick={() => {
+                setColor(c.hex);
+                if (selectionRef.current) recolorSelection(c.hex);
+              }}
+              aria-label={c.name}
+              title={c.name}
+              className={`h-8 w-8 rounded-full shadow-md transition-transform ${
+                color === c.hex
+                  ? "ring-4 ring-[#DC8F20] scale-110"
+                  : "ring-2 ring-[#C9D7EC] hover:scale-105"
+              }`}
+              style={{ backgroundColor: c.hex }}
+            />
+          ))}
+          <button
+            onClick={surpriseColor}
+            className="h-8 px-2.5 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-xs"
+          >
+            <Dices className="h-3.5 w-3.5" /> Cor surpresa
+          </button>
+          <div
+            className="h-8 w-8 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
+            style={{ backgroundColor: color }}
+            aria-label="Cor atual"
+            title="Cor atual"
+          />
+        </div>
+
+        <div className="h-7 w-px bg-[#C9D7EC] hidden md:block" />
+
+        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+          <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
+          <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
+          <ActionButton onClick={handleSave} icon={<Download />} label="Salvar" variant="primary" />
+          <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="secondary" />
+        </div>
+      </div>
+
 
 
       {/* Confirm clear modal */}

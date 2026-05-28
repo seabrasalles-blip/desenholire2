@@ -876,10 +876,7 @@ function PaintPage() {
   };
 
   return (
-    <div
-    <div
-      className="flex h-screen w-screen flex-col overflow-hidden bg-[#F5F8FF]"
-    >
+    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#F5F8FF]">
       {/* Header */}
       <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden">
         <img src={paintLogo} alt="" className="h-7 w-7" />
@@ -888,9 +885,7 @@ function PaintPage() {
         </h1>
       </header>
 
-      </header>
-
-      <div className="flex flex-1 gap-3 px-3 pb-3 overflow-hidden">
+      <div className="flex flex-1 gap-3 px-3 pb-3 pt-3 overflow-hidden">
         {/* Toolbar */}
         <aside
           ref={asideRef}
@@ -912,14 +907,21 @@ function PaintPage() {
         <main className="flex-1 flex flex-col gap-2 min-w-0">
           <div
             ref={containerRef}
-            className="relative flex-1 rounded-3xl bg-white shadow-lg border-4 border-amber-200 overflow-hidden"
-            id="paint-canvas-container"
             className="relative flex-1 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
-
+            id="paint-canvas-container"
+          >
             <canvas
               ref={canvasRef}
               className="absolute inset-0"
-              style={{ touchAction: "none", cursor: tool === "texto" ? "text" : (tool === "selecionar" || tool === "tesoura") ? "crosshair" : "crosshair" }}
+              style={{
+                touchAction: "none",
+                cursor:
+                  tool === "texto"
+                    ? "text"
+                    : tool === "selecionar" || tool === "tesoura"
+                    ? "crosshair"
+                    : "crosshair",
+              }}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -934,10 +936,9 @@ function PaintPage() {
             {textInput && (
               <div
                 ref={textBoxRef}
-                className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-amber-400 shadow-lg p-1"
-                style={{
                 className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-[#004ECC] shadow-lg p-1"
-
+                style={{
+                  left: textBoxPos.left,
                   top: textBoxPos.top,
                 }}
               >
@@ -950,10 +951,9 @@ function PaintPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") commitText();
                     else if (e.key === "Escape") setTextInput(null);
-                  className="px-2 py-1 outline-none text-[#00113C] font-semibold"
-
+                  }}
                   placeholder="Digite aqui..."
-                  className="px-2 py-1 outline-none text-slate-800 font-semibold"
+                  className="px-2 py-1 outline-none text-[#00113C] font-semibold bg-transparent"
                   style={{
                     fontFamily: TEXT_FONT,
                     fontSize: Math.min(TEXT_SIZES[textSize], 28),
@@ -963,25 +963,23 @@ function PaintPage() {
                 <button
                   onClick={commitText}
                   aria-label="Confirmar"
-                  className="rounded-lg bg-emerald-400 hover:bg-emerald-500 text-white p-2"
-                >
                   className="rounded-lg bg-[#DC8F20] hover:bg-[#c47e18] text-white p-2"
-
+                >
+                  <Check className="w-5 h-5" />
                 </button>
                 <button
                   onClick={() => setTextInput(null)}
                   aria-label="Cancelar"
-                  className="rounded-lg bg-rose-400 hover:bg-rose-500 text-white p-2"
-                >
                   className="rounded-lg border-2 border-[#0035BB] text-[#0035BB] hover:bg-[#E6EEFB] p-1.5"
-
+                >
+                  <X className="w-5 h-5" />
                 </button>
               </div>
             )}
           </div>
 
           {/* Bottom support bar: palette + actions */}
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 print:hidden">
+          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-2xl bg-white border-2 border-[#C9D7EC] px-3 py-2 print:hidden">
             <div className="flex flex-wrap items-center justify-center gap-2">
               {COLORS.map((c) => (
                 <button
@@ -994,48 +992,38 @@ function PaintPage() {
                   title={c.name}
                   className={`h-10 w-10 rounded-full shadow-md transition-transform ${
                     color === c.hex
-                  className={`h-10 w-10 rounded-full shadow-md transition-transform ${
-                    color === c.hex
                       ? "ring-4 ring-[#DC8F20] scale-110"
                       : "ring-2 ring-[#C9D7EC] hover:scale-105"
-
+                  }`}
                   style={{ backgroundColor: c.hex }}
                 />
               ))}
               <button
                 onClick={surpriseColor}
-                className="h-10 px-3 rounded-full bg-gradient-to-r from-pink-400 via-yellow-300 to-sky-400 text-slate-900 font-bold shadow-md flex items-center gap-1 hover:scale-105 transition text-sm"
-              >
-                onClick={surpriseColor}
                 className="h-10 px-3 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-sm"
               >
-
-                className="h-10 w-10 rounded-xl border-2 border-slate-300 shadow-inner"
+                <Dices className="h-4 w-4" /> Surpresa
+              </button>
+              <div
+                className="h-10 w-10 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
                 style={{ backgroundColor: color }}
                 aria-label="Cor atual"
-                className="h-10 w-10 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
-
+                title="Cor atual"
               />
             </div>
 
-            <div className="h-8 w-px bg-amber-300 hidden md:block" />
-
-            <div className="flex items-center justify-center gap-2">
             <div className="h-8 w-px bg-[#C9D7EC] hidden md:block" />
 
             <div className="flex items-center justify-center gap-2">
               <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
               <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
               <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="primary" />
-
+            </div>
           </div>
         </main>
       </div>
 
       {/* Confirm clear modal */}
-      {confirmClear && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="rounded-3xl bg-white p-6 shadow-2xl max-w-sm w-full text-center">
       {confirmClear && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00113C]/50 p-4">
           <div className="rounded-2xl bg-white p-6 shadow-2xl max-w-sm w-full text-center border-2 border-[#1B6CA7]">
@@ -1059,9 +1047,6 @@ function PaintPage() {
           </div>
         </div>
       )}
-
-        </div>
-      )}
     </div>
   );
 }
@@ -1081,16 +1066,26 @@ function ToolButton({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-0.5 rounded-xl py-1 px-1 shadow-sm transition-all ${
+      className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl py-1 px-1 shadow-sm transition-all border-2 ${
         active
-          ? "bg-amber-300 ring-4 ring-amber-500 scale-105"
-          : "bg-white hover:bg-amber-100"
+          ? "bg-[#FFF2DC] border-[#DC8F20] scale-105"
+          : "bg-white border-transparent hover:border-[#004ECC]"
       }`}
     >
-      <span className={`text-amber-700 [&_svg]:w-5 [&_svg]:h-5 ${active ? "scale-110" : ""}`}>
+      <span
+        className={`[&_svg]:w-5 [&_svg]:h-5 ${
+          active ? "text-[#DC8F20] scale-110" : "text-[#0035BB]"
+        }`}
+      >
         {icon}
       </span>
-      <span className="text-[10px] font-semibold text-slate-700 leading-tight">{label}</span>
+      <span
+        className={`text-[10px] font-semibold leading-tight ${
+          active ? "text-[#DC8F20]" : "text-[#00113C]"
+        }`}
+      >
+        {label}
+      </span>
     </button>
   );
 }
@@ -1099,23 +1094,30 @@ function ActionButton({
   icon,
   label,
   onClick,
-  color,
+  variant = "primary",
 }: {
   icon: React.ReactNode;
   label: string;
   onClick: () => void;
-  color: string;
+  variant?: "primary" | "secondary" | "outline";
 }) {
+  const styles =
+    variant === "primary"
+      ? "bg-[#0035BB] hover:bg-[#002a96] text-white border-2 border-[#0035BB]"
+      : variant === "secondary"
+      ? "bg-white text-[#00113C] border-2 border-[#1B6CA7] hover:bg-[#E6EEFB]"
+      : "bg-white text-[#DC8F20] border-2 border-[#DC8F20] hover:bg-[#FFF2DC]";
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 rounded-2xl px-3 py-2 text-white font-bold shadow-md transition-transform hover:scale-105 ${color}`}
+      className={`flex items-center gap-2 rounded-xl px-3 py-2 font-semibold shadow-sm transition-transform hover:scale-105 ${styles}`}
     >
       {icon}
       {label}
     </button>
   );
 }
+
 
 // ---------- Utils ----------
 function hslToHex(h: number, s: number, l: number) {

@@ -98,6 +98,8 @@ function PaintPage() {
   const [openPanel, setOpenPanel] = useState<Tool | null>(null);
   const [panelTop, setPanelTop] = useState(0);
   const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null);
+  const [textBoxPos, setTextBoxPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
+  const textBoxRef = useRef<HTMLDivElement | null>(null);
 
   const undoStackRef = useRef<string[]>([]);
   const drawingRef = useRef(false);

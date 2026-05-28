@@ -1090,7 +1090,6 @@ function PaintPage() {
         </main>
       </div>
 
-      </div>
 
       {/* Confirm clear modal */}
       {confirmClear && (

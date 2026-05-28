@@ -1045,7 +1045,7 @@ function ToolButton({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl p-1.5 shadow-sm transition-all ${
+      className={`flex flex-col items-center justify-center gap-0.5 rounded-xl py-1 px-1 shadow-sm transition-all ${
         active
           ? "bg-amber-300 ring-4 ring-amber-500 scale-105"
           : "bg-white hover:bg-amber-100"

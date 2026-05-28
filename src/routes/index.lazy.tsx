@@ -196,18 +196,7 @@ function PaintPage() {
     return () => ro.disconnect();
   }, [started]);
 
-  // ---------- Close floating panel on outside click ----------
-  useEffect(() => {
-    if (!openPanel) return;
-    const handler = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (panelRef.current?.contains(t)) return;
-      if (asideRef.current?.contains(t)) return;
-      setOpenPanel(null);
-    };
-    document.addEventListener("pointerdown", handler);
-    return () => document.removeEventListener("pointerdown", handler);
-  }, [openPanel]);
+  // Outside-click handling now lives in ToolPanel (rendered via portal).
 
   // ---------- Clamp text input overlay inside canvas ----------
   useLayoutEffect(() => {

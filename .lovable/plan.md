@@ -1,36 +1,56 @@
-## Objetivo
-Fazer a rota `/` parar de cair na tela de erro, tanto na abertura inicial quanto alguns segundos depois da renderização.
+# Corrigir painéis secundários do Paint
 
-## O que vou corrigir
-1. **Estabilizar a rota inicial no code splitting**
-   - Transformar `src/routes/index.tsx` em um arquivo mínimo de configuração da rota.
-   - Mover `PaintPage` para `src/routes/index.lazy.tsx` com `createLazyFileRoute("/")`.
-   - Isso evita o problema atual em que a rota está tentando renderizar `WelcomeScreen` e o runtime acusa `ReferenceError: WelcomeScreen is not defined`.
+## Problema
 
-2. **Proteger os hooks que usam refs antes do canvas existir**
-   - Revisar os efeitos e helpers em `src/routes/index.tsx`/`index.lazy.tsx` que fazem acesso direto com `canvasRef.current!`, `previewRef.current!` e `containerRef.current!`.
-   - Adicionar guardas para só executar lógica de canvas quando `started === true` e quando os refs realmente existirem.
-   - Isso cobre o comportamento descrito por você de “abre por alguns segundos e depois quebra”.
+Hoje os painéis de Carimbos, Formas e Tamanhos são renderizados **dentro** do `<aside>` da sidebar (`src/routes/index.lazy.tsx`, linha 970 — `renderPanel()` dentro do aside com `overflow-y: auto`). Por isso ficam cortados, geram rolagem e parecem "presos" à barra lateral.
 
-3. **Validar a abertura e transição da home**
-   - Conferir que a tela `WelcomeScreen` aparece sem cair no fallback.
-   - Conferir que o botão **Começar** abre a área de desenho sem erro.
-   - Confirmar que a rota `/` não volta para `This page didn't load`.
+## Solução
 
-## Arquivos envolvidos
-- `src/routes/index.tsx`
-- `src/routes/index.lazy.tsx` (novo)
-- possivelmente `src/components/paint/WelcomeScreen.tsx` apenas se eu precisar ajustar import/export de forma cirúrgica
+Renderizar os painéis em uma camada independente via React Portal (`document.body`), ancorados ao botão clicado e com posicionamento inteligente baseado no espaço disponível na janela.
+
+## Mudanças
+
+### 1. Novo componente `src/components/paint/ToolPanel.tsx`
+- Recebe `anchorEl` (HTMLElement do botão clicado), `onClose`, `title` e `children`.
+- Renderiza via `createPortal` em `document.body` (fora de qualquer container com overflow).
+- Posicionamento inteligente em `useLayoutEffect`:
+  - Lê `anchorEl.getBoundingClientRect()` e o tamanho do próprio painel.
+  - **Horizontal:** tenta abrir à direita do botão (`right + 8px`); se ultrapassar `window.innerWidth - 12px`, abre à esquerda (`left - panelWidth - 8px`); se ainda não couber, em telas estreitas centraliza como mini-modal sobre o canvas.
+  - **Vertical:** alinha pelo topo do botão; se ultrapassar `window.innerHeight - 12px`, sobe; nunca abaixo de `12px` do topo.
+  - Recalcula em `resize` e `scroll` da janela.
+- Estilo: `position: fixed`, `z-50`, fundo branco, borda `#1B6CA7`, sombra suave, cantos arredondados, fonte Poppins, padding confortável.
+- Fechamento automático:
+  - Click/touch fora (`mousedown`/`touchstart` no `document`, ignorando o `anchorEl`).
+  - Tecla `Escape`.
+  - Quando o filho chamar `onClose` após uma seleção (já é o comportamento atual via `setOpenPanel(null)`).
+
+### 2. Refatorar `renderPanel()` em `src/routes/index.lazy.tsx`
+- Guardar a ref do botão clicado (`anchorRef`) em vez de `panelTop`. Atualizar `selectTool` para receber/armazenar `ev.currentTarget`.
+- Substituir o `<div className="absolute z-30 ...">` (linhas 917–930) por `<ToolPanel anchorEl={anchor} onClose={() => setOpenPanel(null)} title={title}>{body}</ToolPanel>`.
+- Mover a chamada `{renderPanel()}` para **fora** do `<aside>` (o portal não precisa estar dentro, e isso elimina qualquer herança de overflow).
+- Remover lógica antiga de `panelTop`/`panelRef` que dependia do aside.
+
+### 3. Ajustes de layout dos painéis
+- Carimbos: manter grid `grid-cols-4` (já bom), painel ~`w-64`.
+- Formas: grid `grid-cols-2` (já bom), painel ~`w-56`.
+- Tamanhos (pincel/borracha): `flex` horizontal (já bom), painel ~`w-56`.
+- Tamanho do texto: trocar empilhamento atual por linha horizontal com 3 botões grandes.
+- Garantir que nenhum painel use `overflow` interno (altura auto).
+
+### 4. Sidebar
+- Continua com `overflow-y-auto` para os botões principais, mas sem mais painéis dentro dela — nada empurra/corta.
+
+## Critérios de sucesso
+
+- Clicar em Carimbos/Formas/Tamanhos abre painel totalmente visível ao lado do botão.
+- Painel nunca fica cortado nem cria scroll interno.
+- Em viewport estreita (≤698px como o atual), o painel reposiciona para caber.
+- Painel fecha ao selecionar opção, clicar fora, `Esc` ou trocar de ferramenta.
+- Sidebar mostra apenas botões principais.
 
 ## Detalhes técnicos
-- Hoje há **dois riscos reais**:
-  - **Erro confirmado nos logs:** `ReferenceError: WelcomeScreen is not defined` em `src/routes/index.tsx:941`.
-  - **Risco adicional no cliente:** hooks da página acessam refs do canvas antes da tela de desenho estar montada (`useEffect` com `canvasRef.current!`, `previewRef.current!`, `containerRef.current!`).
-- A correção principal será usar o padrão recomendado do TanStack para separar a configuração crítica da rota do componente pesado/lazy.
-- Depois disso, vou endurecer a página contra refs nulas para eliminar o crash tardio.
 
-## Resultado esperado
-- A tela inicial abre normalmente.
-- Ela não cai sozinha após alguns segundos.
-- Clicar em **Começar** entra no ateliê sem erro.
-- A página deixa de exibir `This page didn't load`. 
+- Portal: `createPortal(node, document.body)` — SSR-safe usando `useEffect`/`useState` para `mounted`.
+- Listener de "click fora": registrado em `pointerdown` no `document`, removido no unmount.
+- `useLayoutEffect` para medir antes do paint e evitar flicker.
+- Sem dependências novas; apenas React + Tailwind.

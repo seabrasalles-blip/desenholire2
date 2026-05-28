@@ -985,8 +985,6 @@ function PaintPage() {
             className="relative flex-1 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
             id="paint-canvas-container"
           >
-
-          >
             <canvas
               ref={canvasRef}
               className="absolute inset-0"

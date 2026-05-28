@@ -5,6 +5,7 @@ import { WelcomeScreen } from "@/components/paint/WelcomeScreen";
 import { ToolButton } from "@/components/paint/ToolButton";
 import { ActionButton } from "@/components/paint/ActionButton";
 import { hslToHex } from "@/lib/colorUtils";
+import { ToolPanel } from "@/components/paint/ToolPanel";
 
 import {
   Brush,
@@ -118,7 +119,6 @@ function PaintPage() {
   const previewRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const asideRef = useRef<HTMLElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const [tool, setTool] = useState<Tool>("pincel");
   const [color, setColor] = useState(COLORS[0].hex);
@@ -132,7 +132,7 @@ function PaintPage() {
   const [started, setStarted] = useState(false);
 
   const [openPanel, setOpenPanel] = useState<Tool | null>(null);
-  const [panelTop, setPanelTop] = useState(0);
+  const [panelAnchor, setPanelAnchor] = useState<HTMLElement | null>(null);
   const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null);
   const [textBoxPos, setTextBoxPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const textBoxRef = useRef<HTMLDivElement | null>(null);
@@ -196,18 +196,7 @@ function PaintPage() {
     return () => ro.disconnect();
   }, [started]);
 
-  // ---------- Close floating panel on outside click ----------
-  useEffect(() => {
-    if (!openPanel) return;
-    const handler = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (panelRef.current?.contains(t)) return;
-      if (asideRef.current?.contains(t)) return;
-      setOpenPanel(null);
-    };
-    document.addEventListener("pointerdown", handler);
-    return () => document.removeEventListener("pointerdown", handler);
-  }, [openPanel]);
+  // Outside-click handling now lives in ToolPanel (rendered via portal).
 
   // ---------- Clamp text input overlay inside canvas ----------
   useLayoutEffect(() => {
@@ -405,16 +394,18 @@ function PaintPage() {
     setTextInput(null);
     const meta = TOOLS.find((x) => x.id === t)!;
     if (meta.hasPanel) {
-      if (ev && asideRef.current) {
-        const btnRect = ev.currentTarget.getBoundingClientRect();
-        const asideRect = asideRef.current.getBoundingClientRect();
-        setPanelTop(btnRect.top - asideRect.top);
-      }
+      if (ev) setPanelAnchor(ev.currentTarget);
       setOpenPanel(t);
     } else {
       setOpenPanel(null);
+      setPanelAnchor(null);
     }
   };
+
+  const closePanel = useCallback(() => {
+    setOpenPanel(null);
+    setPanelAnchor(null);
+  }, []);
 
   // ---------- Pointer position ----------
   const getPos = (e: React.PointerEvent<HTMLCanvasElement>) => {
@@ -785,12 +776,14 @@ function PaintPage() {
 
   // ---------- Panel content ----------
   const renderPanel = () => {
-    if (!openPanel) return null;
+    if (!openPanel || !panelAnchor) return null;
     let title = "";
     let body: React.ReactNode = null;
+    let width = 240;
 
     if (openPanel === "pincel" || openPanel === "magico") {
       title = "Tamanho";
+      width = 240;
       body = (
         <div className="flex justify-around items-center gap-2">
           {(Object.keys(BRUSH_SIZES) as (keyof typeof BRUSH_SIZES)[]).map((k) => (
@@ -798,7 +791,7 @@ function PaintPage() {
               key={k}
               onClick={() => {
                 setBrushSize(k);
-                setOpenPanel(null);
+                closePanel();
               }}
               aria-label={k}
               className={`flex items-center justify-center rounded-full w-14 h-14 transition ${brushSize === k ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
@@ -813,6 +806,7 @@ function PaintPage() {
       );
     } else if (openPanel === "borracha") {
       title = "Tamanho";
+      width = 240;
       body = (
         <div className="flex justify-around items-center gap-2">
           {(Object.keys(ERASER_SIZES) as (keyof typeof ERASER_SIZES)[]).map((k) => (
@@ -820,7 +814,7 @@ function PaintPage() {
               key={k}
               onClick={() => {
                 setEraserSize(k);
-                setOpenPanel(null);
+                closePanel();
               }}
               aria-label={k}
               className={`flex items-center justify-center rounded-full w-14 h-14 transition ${eraserSize === k ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
@@ -838,6 +832,7 @@ function PaintPage() {
       );
     } else if (openPanel === "carimbo") {
       title = "Escolha um carimbo";
+      width = 280;
       body = (
         <div className="grid grid-cols-4 gap-2">
           {STAMPS.map((s) => (
@@ -845,7 +840,7 @@ function PaintPage() {
               key={s.id}
               onClick={() => {
                 setStamp(s.id);
-                setOpenPanel(null);
+                closePanel();
               }}
               aria-label={s.label}
               title={s.label}
@@ -858,6 +853,7 @@ function PaintPage() {
       );
     } else if (openPanel === "forma") {
       title = "Escolha uma forma";
+      width = 220;
       const shapes: { id: Shape; label: string; icon: React.ReactNode }[] = [
         { id: "circulo", label: "Círculo", icon: <Circle className="w-7 h-7" /> },
         { id: "quadrado", label: "Quadrado", icon: <Square className="w-7 h-7" /> },
@@ -871,7 +867,7 @@ function PaintPage() {
               key={s.id}
               onClick={() => {
                 setShape(s.id);
-                setOpenPanel(null);
+                closePanel();
               }}
               aria-label={s.label}
               title={s.label}
@@ -885,29 +881,30 @@ function PaintPage() {
       );
     } else if (openPanel === "texto") {
       title = "Tamanho do texto";
+      width = 260;
       const sizes: { id: TextSize; label: string; preview: number }[] = [
         { id: "pequeno", label: "Pequeno", preview: 16 },
         { id: "medio", label: "Médio", preview: 22 },
         { id: "grande", label: "Grande", preview: 30 },
       ];
       body = (
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {sizes.map((s) => (
             <button
               key={s.id}
               onClick={() => {
                 setTextSize(s.id);
-                setOpenPanel(null);
+                closePanel();
               }}
-              className={`flex items-center justify-between rounded-2xl px-4 py-2 transition ${textSize === s.id ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
+              className={`flex flex-col items-center justify-center gap-1 rounded-2xl py-2 transition ${textSize === s.id ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
             >
-              <span className="font-semibold text-[#00113C]">{s.label}</span>
               <span
                 className={textSize === s.id ? "text-[#DC8F20]" : "text-[#0035BB]"}
-                style={{ fontFamily: TEXT_FONT, fontSize: s.preview, fontWeight: 700 }}
+                style={{ fontFamily: TEXT_FONT, fontSize: s.preview, fontWeight: 700, lineHeight: 1 }}
               >
                 Aa
               </span>
+              <span className="text-[11px] font-semibold text-[#00113C]">{s.label}</span>
             </button>
           ))}
         </div>
@@ -915,18 +912,14 @@ function PaintPage() {
     }
 
     return (
-      <div
-        ref={panelRef}
-        className="absolute z-30 rounded-2xl bg-white border-2 border-[#1B6CA7] p-4 w-60"
-        style={{
-          left: "calc(100% + 8px)",
-          top: Math.max(0, panelTop),
-          boxShadow: "0 10px 30px -10px rgba(0,17,60,0.25)",
-        }}
+      <ToolPanel
+        anchorEl={panelAnchor}
+        onClose={closePanel}
+        title={title}
+        width={width}
       >
-        <p className="text-sm font-semibold text-[#00113C] mb-2 text-center">{title}</p>
         {body}
-      </div>
+      </ToolPanel>
     );
   };
 
@@ -967,8 +960,8 @@ function PaintPage() {
               ))}
             </div>
           ))}
-          {renderPanel()}
         </aside>
+        {renderPanel()}
 
         {/* Canvas area */}
         <main className="flex-1 flex flex-col gap-2 min-w-0">

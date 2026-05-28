@@ -19,6 +19,8 @@ import {
   Type,
   Check,
   X,
+  Scissors,
+  MousePointerSquareDashed,
 } from "lucide-react";
 import { floodFill, hexToRgba } from "@/lib/floodFill";
 import { STAMPS, drawStamp, type StampId } from "@/lib/stamps";

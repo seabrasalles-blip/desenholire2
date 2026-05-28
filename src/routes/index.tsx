@@ -1077,7 +1077,8 @@ function PaintPage() {
                 onClick={surpriseColor}
                 className="h-10 px-3 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-sm"
               >
-                <Dices className="h-4 w-4" /> Surpresa
+                <Dices className="h-4 w-4" /> Cor surpresa
+
               </button>
               <div
                 className="h-10 w-10 rounded-xl border-2 border-[#1B6CA7] shadow-inner"

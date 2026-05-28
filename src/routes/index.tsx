@@ -107,6 +107,23 @@ function PaintPage() {
   const [textBoxPos, setTextBoxPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const textBoxRef = useRef<HTMLDivElement | null>(null);
 
+  // Selection state for Selecionar/Tesoura
+  type Selection = {
+    sx: number; sy: number; sw: number; sh: number;
+    dx: number; dy: number;
+    bitmap: HTMLCanvasElement;
+    lifted: boolean;
+  };
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const selectionRef = useRef<Selection | null>(null);
+  useEffect(() => { selectionRef.current = selection; }, [selection]);
+  const selectDragRef = useRef<
+    | { mode: "creating"; startX: number; startY: number; curX: number; curY: number; forCut: boolean }
+    | { mode: "moving"; grabDx: number; grabDy: number }
+    | null
+  >(null);
+  const dashOffsetRef = useRef(0);
+
   const undoStackRef = useRef<string[]>([]);
   const drawingRef = useRef(false);
   const lastPtRef = useRef<{ x: number; y: number } | null>(null);

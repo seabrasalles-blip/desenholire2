@@ -48,7 +48,9 @@ type Tool =
   | "carimbo"
   | "magico"
   | "forma"
-  | "texto";
+  | "texto"
+  | "selecionar"
+  | "tesoura";
 type Shape = "circulo" | "quadrado" | "triangulo" | "retangulo";
 type TextSize = "pequeno" | "medio" | "grande";
 

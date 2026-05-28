@@ -765,6 +765,7 @@ function PaintPage() {
       document.body.removeChild(a);
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     }, "image/png");
+  };
 
 
   // ---------- Surprise color ----------

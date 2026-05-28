@@ -70,7 +70,8 @@ const COLORS = [
 const BRUSH_SIZES = { fino: 4, medio: 12, grosso: 24 } as const;
 const ERASER_SIZES = { pequena: 12, media: 28, grande: 56 } as const;
 const TEXT_SIZES: Record<TextSize, number> = { pequeno: 24, medio: 40, grande: 64 };
-const TEXT_FONT = '"Nunito","Comic Sans MS",system-ui,sans-serif';
+const TEXT_FONT = '"Poppins",system-ui,sans-serif';
+
 
 const TOOLS: { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean }[] = [
   { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
@@ -736,10 +737,12 @@ function PaintPage() {
                 setOpenPanel(null);
               }}
               aria-label={k}
-              className={`flex items-center justify-center rounded-full w-14 h-14 bg-amber-50 hover:bg-amber-100 transition ${brushSize === k ? "ring-4 ring-amber-500" : ""}`}
+              className={`flex items-center justify-center rounded-full w-14 h-14 transition ${brushSize === k ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
+
             >
               <span
-                className="rounded-full bg-slate-700"
+                className="rounded-full bg-[#00113C]"
+
                 style={{ width: BRUSH_SIZES[k], height: BRUSH_SIZES[k] }}
               />
             </button>
@@ -758,10 +761,12 @@ function PaintPage() {
                 setOpenPanel(null);
               }}
               aria-label={k}
-              className={`flex items-center justify-center rounded-full w-14 h-14 bg-amber-50 hover:bg-amber-100 transition ${eraserSize === k ? "ring-4 ring-amber-500" : ""}`}
+              className={`flex items-center justify-center rounded-full w-14 h-14 transition ${eraserSize === k ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
+
             >
               <span
-                className="rounded-full border-2 border-slate-400 bg-white"
+                className="rounded-full border-2 border-[#1B6CA7] bg-white"
+
                 style={{
                   width: Math.min(36, ERASER_SIZES[k] / 1.5 + 10),
                   height: Math.min(36, ERASER_SIZES[k] / 1.5 + 10),
@@ -784,7 +789,8 @@ function PaintPage() {
               }}
               aria-label={s.label}
               title={s.label}
-              className={`text-3xl rounded-2xl w-14 h-14 flex items-center justify-center transition ${stamp === s.id ? "bg-amber-200 ring-4 ring-amber-500" : "bg-amber-50 hover:bg-amber-100"}`}
+              className={`text-3xl rounded-2xl w-14 h-14 flex items-center justify-center transition ${stamp === s.id ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
+
             >
               {s.emoji}
             </button>
@@ -810,10 +816,11 @@ function PaintPage() {
               }}
               aria-label={s.label}
               title={s.label}
-              className={`flex flex-col items-center justify-center gap-1 rounded-2xl p-3 transition ${shape === s.id ? "bg-amber-200 ring-4 ring-amber-500" : "bg-amber-50 hover:bg-amber-100"}`}
+              className={`flex flex-col items-center justify-center gap-1 rounded-2xl p-3 transition ${shape === s.id ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
             >
-              <span className="text-amber-700">{s.icon}</span>
-              <span className="text-xs font-semibold text-slate-700">{s.label}</span>
+              <span className={shape === s.id ? "text-[#DC8F20]" : "text-[#0035BB]"}>{s.icon}</span>
+              <span className="text-xs font-semibold text-[#00113C]">{s.label}</span>
+
             </button>
           ))}
         </div>
@@ -834,13 +841,14 @@ function PaintPage() {
                 setTextSize(s.id);
                 setOpenPanel(null);
               }}
-              className={`flex items-center justify-between rounded-2xl px-4 py-2 transition ${textSize === s.id ? "bg-amber-200 ring-4 ring-amber-500" : "bg-amber-50 hover:bg-amber-100"}`}
+              className={`flex items-center justify-between rounded-2xl px-4 py-2 transition ${textSize === s.id ? "bg-[#FFF2DC] ring-4 ring-[#DC8F20]" : "bg-[#F5F8FF] hover:bg-[#E6EEFB]"}`}
             >
-              <span className="font-bold text-slate-700">{s.label}</span>
+              <span className="font-semibold text-[#00113C]">{s.label}</span>
               <span
-                className="text-amber-700"
+                className={textSize === s.id ? "text-[#DC8F20]" : "text-[#0035BB]"}
                 style={{ fontFamily: TEXT_FONT, fontSize: s.preview, fontWeight: 700 }}
               >
+
                 Aa
               </span>
             </button>
@@ -852,13 +860,16 @@ function PaintPage() {
     return (
       <div
         ref={panelRef}
-        className="absolute z-30 rounded-3xl bg-white border-4 border-amber-200 shadow-2xl p-4 w-60"
+        ref={panelRef}
+        className="absolute z-30 rounded-2xl bg-white border-2 border-[#1B6CA7] p-4 w-60"
         style={{
           left: "calc(100% + 8px)",
           top: Math.max(0, panelTop),
+          boxShadow: "0 10px 30px -10px rgba(0,17,60,0.25)",
         }}
       >
-        <p className="text-sm font-bold text-amber-700 mb-2 text-center">{title}</p>
+        <p className="text-sm font-semibold text-[#00113C] mb-2 text-center">{title}</p>
+
         {body}
       </div>
     );
@@ -866,14 +877,17 @@ function PaintPage() {
 
   return (
     <div
-      className="flex h-screen w-screen flex-col overflow-hidden"
-      style={{ backgroundColor: "#fef7e6" }}
+    <div
+      className="flex h-screen w-screen flex-col overflow-hidden bg-[#F5F8FF]"
     >
       {/* Header */}
-      <header className="flex items-center justify-center py-2 print:hidden">
-        <h1 className="text-xl md:text-2xl font-bold text-amber-700">
-          🎨 Solte a imaginação e crie seu desenho!
+      <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden">
+        <img src={paintLogo} alt="" className="h-7 w-7" />
+        <h1 className="text-lg md:text-xl font-semibold tracking-tight">
+          Solte a imaginação e crie seu desenho!
         </h1>
+      </header>
+
       </header>
 
       <div className="flex flex-1 gap-3 px-3 pb-3 overflow-hidden">
@@ -900,7 +914,8 @@ function PaintPage() {
             ref={containerRef}
             className="relative flex-1 rounded-3xl bg-white shadow-lg border-4 border-amber-200 overflow-hidden"
             id="paint-canvas-container"
-          >
+            className="relative flex-1 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
+
             <canvas
               ref={canvasRef}
               className="absolute inset-0"
@@ -921,7 +936,8 @@ function PaintPage() {
                 ref={textBoxRef}
                 className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-amber-400 shadow-lg p-1"
                 style={{
-                  left: textBoxPos.left,
+                className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-[#004ECC] shadow-lg p-1"
+
                   top: textBoxPos.top,
                 }}
               >
@@ -934,7 +950,8 @@ function PaintPage() {
                   onKeyDown={(e) => {
                     if (e.key === "Enter") commitText();
                     else if (e.key === "Escape") setTextInput(null);
-                  }}
+                  className="px-2 py-1 outline-none text-[#00113C] font-semibold"
+
                   placeholder="Digite aqui..."
                   className="px-2 py-1 outline-none text-slate-800 font-semibold"
                   style={{
@@ -948,14 +965,16 @@ function PaintPage() {
                   aria-label="Confirmar"
                   className="rounded-lg bg-emerald-400 hover:bg-emerald-500 text-white p-2"
                 >
-                  <Check className="w-5 h-5" />
+                  className="rounded-lg bg-[#DC8F20] hover:bg-[#c47e18] text-white p-2"
+
                 </button>
                 <button
                   onClick={() => setTextInput(null)}
                   aria-label="Cancelar"
                   className="rounded-lg bg-rose-400 hover:bg-rose-500 text-white p-2"
                 >
-                  <X className="w-5 h-5" />
+                  className="rounded-lg border-2 border-[#0035BB] text-[#0035BB] hover:bg-[#E6EEFB] p-1.5"
+
                 </button>
               </div>
             )}
@@ -975,9 +994,11 @@ function PaintPage() {
                   title={c.name}
                   className={`h-10 w-10 rounded-full shadow-md transition-transform ${
                     color === c.hex
-                      ? "ring-4 ring-amber-500 scale-110"
-                      : "ring-2 ring-slate-200 hover:scale-105"
-                  }`}
+                  className={`h-10 w-10 rounded-full shadow-md transition-transform ${
+                    color === c.hex
+                      ? "ring-4 ring-[#DC8F20] scale-110"
+                      : "ring-2 ring-[#C9D7EC] hover:scale-105"
+
                   style={{ backgroundColor: c.hex }}
                 />
               ))}
@@ -985,23 +1006,28 @@ function PaintPage() {
                 onClick={surpriseColor}
                 className="h-10 px-3 rounded-full bg-gradient-to-r from-pink-400 via-yellow-300 to-sky-400 text-slate-900 font-bold shadow-md flex items-center gap-1 hover:scale-105 transition text-sm"
               >
-                <Dices className="h-4 w-4" /> Surpresa
-              </button>
-              <div
+                onClick={surpriseColor}
+                className="h-10 px-3 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-sm"
+              >
+
                 className="h-10 w-10 rounded-xl border-2 border-slate-300 shadow-inner"
                 style={{ backgroundColor: color }}
                 aria-label="Cor atual"
-                title="Cor atual"
+                className="h-10 w-10 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
+
               />
             </div>
 
             <div className="h-8 w-px bg-amber-300 hidden md:block" />
 
             <div className="flex items-center justify-center gap-2">
-              <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" color="bg-sky-400 hover:bg-sky-500" />
-              <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" color="bg-rose-400 hover:bg-rose-500" />
-              <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" color="bg-emerald-400 hover:bg-emerald-500" />
-            </div>
+            <div className="h-8 w-px bg-[#C9D7EC] hidden md:block" />
+
+            <div className="flex items-center justify-center gap-2">
+              <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
+              <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
+              <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="primary" />
+
           </div>
         </main>
       </div>
@@ -1010,24 +1036,30 @@ function PaintPage() {
       {confirmClear && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="rounded-3xl bg-white p-6 shadow-2xl max-w-sm w-full text-center">
-            <p className="text-xl font-bold text-slate-800 mb-5">
+      {confirmClear && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[#00113C]/50 p-4">
+          <div className="rounded-2xl bg-white p-6 shadow-2xl max-w-sm w-full text-center border-2 border-[#1B6CA7]">
+            <p className="text-xl font-semibold text-[#00113C] mb-5">
               Quer apagar todo o desenho?
             </p>
             <div className="flex justify-center gap-3">
               <button
                 onClick={clearCanvas}
-                className="rounded-2xl bg-rose-500 hover:bg-rose-600 text-white font-bold px-5 py-3 shadow"
+                className="rounded-xl bg-[#DC8F20] hover:bg-[#c47e18] text-white font-semibold px-5 py-3 shadow"
               >
                 Sim, apagar
               </button>
               <button
                 onClick={() => setConfirmClear(false)}
-                className="rounded-2xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold px-5 py-3 shadow"
+                className="rounded-xl border-2 border-[#0035BB] text-[#0035BB] hover:bg-[#E6EEFB] font-semibold px-5 py-3"
               >
                 Não, voltar
               </button>
             </div>
           </div>
+        </div>
+      )}
+
         </div>
       )}
     </div>

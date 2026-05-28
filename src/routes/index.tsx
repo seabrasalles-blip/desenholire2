@@ -942,7 +942,7 @@ function PaintPage() {
       <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden">
         <img src={paintLogo} alt="" className="h-7 w-7" />
         <h1 className="text-lg md:text-xl font-semibold tracking-tight">
-          Solte a imaginação e crie seu desenho!
+          Ateliê de Desenho
         </h1>
       </header>
 
@@ -950,26 +950,42 @@ function PaintPage() {
         {/* Toolbar */}
         <aside
           ref={asideRef}
-          className="relative flex flex-col gap-1 w-20 md:w-24 print:hidden"
+          className="relative flex flex-col gap-1.5 w-20 md:w-24 print:hidden overflow-y-auto"
         >
-          {TOOLS.map((t) => (
-            <ToolButton
-              key={t.id}
-              icon={t.icon}
-              label={t.label}
-              active={tool === t.id}
-              onClick={(ev) => selectTool(t.id, ev)}
-            />
+          {TOOL_GROUPS.map((group, gi) => (
+            <div key={group.title} className="flex flex-col gap-1">
+              {gi > 0 && <div className="h-px bg-[#C9D7EC] mx-1 my-1" />}
+              <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none">
+                {group.title}
+              </p>
+              {group.tools.map((t) => (
+                <ToolButton
+                  key={t.id}
+                  icon={t.icon}
+                  label={t.label}
+                  active={tool === t.id}
+                  onClick={(ev) => selectTool(t.id, ev)}
+                />
+              ))}
+            </div>
           ))}
           {renderPanel()}
         </aside>
 
         {/* Canvas area */}
         <main className="flex-1 flex flex-col gap-2 min-w-0">
+          {/* Microinstruction */}
+          <div className="rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1.5 text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden">
+            <Sparkles className="w-4 h-4 text-[#DC8F20] shrink-0" />
+            <span className="truncate">{MICRO_HINTS[tool]}</span>
+          </div>
+
           <div
             ref={containerRef}
             className="relative flex-1 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
             id="paint-canvas-container"
+          >
+
           >
             <canvas
               ref={canvasRef}

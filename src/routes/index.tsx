@@ -655,11 +655,11 @@ function PaintPage() {
             {/* Inline text input overlay */}
             {textInput && (
               <div
+                ref={textBoxRef}
                 className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-amber-400 shadow-lg p-1"
                 style={{
-                  left: textInput.x,
-                  top: textInput.y,
-                  transform: "translateY(-4px)",
+                  left: textBoxPos.left,
+                  top: textBoxPos.top,
                 }}
               >
                 <input

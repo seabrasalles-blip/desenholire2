@@ -18,10 +18,12 @@ export function ActionButton({
   return (
     <button
       onClick={onClick}
-      className={`flex items-center gap-2 rounded-xl px-3 py-2 font-semibold shadow-sm transition-transform hover:scale-105 ${styles}`}
+      className={`flex items-center gap-1.5 rounded-xl px-2.5 py-1.5 text-sm font-semibold shadow-sm transition-transform hover:scale-105 [&_svg]:w-4 [&_svg]:h-4 ${styles}`}
     >
       {icon}
       {label}
     </button>
   );
+}
+
 }

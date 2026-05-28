@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import paintLogo from "@/assets/paint-logo.png";
+import welcomeIllustration from "@/assets/welcome-illustration.png";
 
 import {
   Brush,
@@ -14,6 +15,8 @@ import {
   Trash2,
   Printer,
   Dices,
+  Download,
+  ArrowRight,
   Circle,
   Square,
   Triangle,
@@ -30,16 +33,17 @@ import { STAMPS, drawStamp, type StampId } from "@/lib/stamps";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Paint Infantil — Solte a imaginação!" },
+      { title: "Ateliê de Desenho — Paint Infantil" },
       {
         name: "description",
         content:
-          "Aplicativo de pintura infantil: desenhe, carimbe, use cores e imprima seu desenho.",
+          "Ateliê de Desenho: aplicativo de pintura infantil educacional. Desenhe, carimbe, use cores e salve seu desenho.",
       },
     ],
   }),
   component: PaintPage,
 });
+
 
 // ---------- Configuration ----------
 type Tool =

@@ -394,16 +394,18 @@ function PaintPage() {
     setTextInput(null);
     const meta = TOOLS.find((x) => x.id === t)!;
     if (meta.hasPanel) {
-      if (ev && asideRef.current) {
-        const btnRect = ev.currentTarget.getBoundingClientRect();
-        const asideRect = asideRef.current.getBoundingClientRect();
-        setPanelTop(btnRect.top - asideRect.top);
-      }
+      if (ev) setPanelAnchor(ev.currentTarget);
       setOpenPanel(t);
     } else {
       setOpenPanel(null);
+      setPanelAnchor(null);
     }
   };
+
+  const closePanel = useCallback(() => {
+    setOpenPanel(null);
+    setPanelAnchor(null);
+  }, []);
 
   // ---------- Pointer position ----------
   const getPos = (e: React.PointerEvent<HTMLCanvasElement>) => {

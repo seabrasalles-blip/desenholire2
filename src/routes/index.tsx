@@ -931,7 +931,12 @@ function PaintPage() {
     );
   };
 
+  if (!started) {
+    return <WelcomeScreen onStart={() => setStarted(true)} />;
+  }
+
   return (
+
     <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#F5F8FF]">
       {/* Header */}
       <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden">

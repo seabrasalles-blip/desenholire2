@@ -930,23 +930,23 @@ function PaintPage() {
   return (
     <div className="flex h-dvh w-screen flex-col overflow-hidden bg-[#F5F8FF]">
       {/* Header */}
-      <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden">
-        <img src={paintLogo} alt="" className="h-7 w-7" />
-        <h1 className="text-lg md:text-xl font-semibold tracking-tight">
+      <header className="flex items-center justify-center gap-2 py-1.5 px-3 bg-[#00113C] text-white print:hidden shrink-0">
+        <img src={paintLogo} alt="" className="h-6 w-6" />
+        <h1 className="text-base md:text-lg font-semibold tracking-tight">
           Ateliê de Desenho
         </h1>
       </header>
 
-      <div className="flex flex-1 gap-3 px-3 pb-3 pt-3 overflow-hidden">
+      <div className="flex flex-1 min-h-0 gap-2 px-2 pb-2 pt-2 overflow-hidden">
         {/* Toolbar */}
         <aside
           ref={asideRef}
-          className="relative flex flex-col gap-1.5 w-20 md:w-24 print:hidden overflow-y-auto"
+          className="relative flex flex-col gap-1 w-16 md:w-20 print:hidden min-h-0 overflow-y-auto shrink-0"
         >
           {TOOL_GROUPS.map((group, gi) => (
             <div key={group.title} className="flex flex-col gap-1">
-              {gi > 0 && <div className="h-px bg-[#C9D7EC] mx-1 my-1" />}
-              <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none">
+              {gi > 0 && <div className="h-px bg-[#C9D7EC] mx-1 my-0.5" />}
+              <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
                 {group.title}
               </p>
               {group.tools.map((t) => (
@@ -964,16 +964,16 @@ function PaintPage() {
         {renderPanel()}
 
         {/* Canvas area */}
-        <main className="flex-1 flex flex-col gap-2 min-w-0">
+        <main className="flex-1 flex flex-col gap-1.5 min-w-0 min-h-0">
           {/* Microinstruction */}
-          <div className="rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1.5 text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden">
+          <div className="rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1 text-xs md:text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden shrink-0 max-h-[600px]:hidden">
             <Sparkles className="w-4 h-4 text-[#DC8F20] shrink-0" />
             <span className="truncate">{MICRO_HINTS[tool]}</span>
           </div>
 
           <div
             ref={containerRef}
-            className="relative flex-1 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
+            className="relative flex-1 min-h-0 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
             id="paint-canvas-container"
           >
             <canvas
@@ -1045,8 +1045,8 @@ function PaintPage() {
           </div>
 
           {/* Bottom support bar: palette + actions */}
-          <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-2 rounded-2xl bg-white border-2 border-[#C9D7EC] px-3 py-2 print:hidden">
-            <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 rounded-2xl bg-white border-2 border-[#C9D7EC] px-2 py-1.5 print:hidden shrink-0">
+            <div className="flex flex-wrap items-center justify-center gap-1.5">
               {COLORS.map((c) => (
                 <button
                   key={c.hex}
@@ -1056,7 +1056,7 @@ function PaintPage() {
                   }}
                   aria-label={c.name}
                   title={c.name}
-                  className={`h-10 w-10 rounded-full shadow-md transition-transform ${
+                  className={`h-8 w-8 rounded-full shadow-md transition-transform ${
                     color === c.hex
                       ? "ring-4 ring-[#DC8F20] scale-110"
                       : "ring-2 ring-[#C9D7EC] hover:scale-105"
@@ -1066,21 +1066,21 @@ function PaintPage() {
               ))}
               <button
                 onClick={surpriseColor}
-                className="h-10 px-3 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-sm"
+                className="h-8 px-2.5 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-xs"
               >
-                <Dices className="h-4 w-4" /> Cor surpresa
+                <Dices className="h-3.5 w-3.5" /> Cor surpresa
               </button>
               <div
-                className="h-10 w-10 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
+                className="h-8 w-8 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
                 style={{ backgroundColor: color }}
                 aria-label="Cor atual"
                 title="Cor atual"
               />
             </div>
 
-            <div className="h-8 w-px bg-[#C9D7EC] hidden md:block" />
+            <div className="h-7 w-px bg-[#C9D7EC] hidden md:block" />
 
-            <div className="flex items-center justify-center gap-2 flex-wrap">
+            <div className="flex items-center justify-center gap-1.5 flex-wrap">
               <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
               <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
               <ActionButton onClick={handleSave} icon={<Download />} label="Salvar" variant="primary" />
@@ -1088,6 +1088,8 @@ function PaintPage() {
             </div>
           </div>
         </main>
+      </div>
+
       </div>
 
       {/* Confirm clear modal */}

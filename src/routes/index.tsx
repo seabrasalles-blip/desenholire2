@@ -19,6 +19,8 @@ import {
   Type,
   Check,
   X,
+  Scissors,
+  MousePointerSquareDashed,
 } from "lucide-react";
 import { floodFill, hexToRgba } from "@/lib/floodFill";
 import { STAMPS, drawStamp, type StampId } from "@/lib/stamps";
@@ -46,7 +48,9 @@ type Tool =
   | "carimbo"
   | "magico"
   | "forma"
-  | "texto";
+  | "texto"
+  | "selecionar"
+  | "tesoura";
 type Shape = "circulo" | "quadrado" | "triangulo" | "retangulo";
 type TextSize = "pequeno" | "medio" | "grande";
 
@@ -75,6 +79,8 @@ const TOOLS: { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean
   { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
   { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
   { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
+  { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
+  { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
 ];
 
 // ---------- Page ----------
@@ -100,6 +106,23 @@ function PaintPage() {
   const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null);
   const [textBoxPos, setTextBoxPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const textBoxRef = useRef<HTMLDivElement | null>(null);
+
+  // Selection state for Selecionar/Tesoura
+  type Selection = {
+    sx: number; sy: number; sw: number; sh: number;
+    dx: number; dy: number;
+    bitmap: HTMLCanvasElement;
+    lifted: boolean;
+  };
+  const [selection, setSelection] = useState<Selection | null>(null);
+  const selectionRef = useRef<Selection | null>(null);
+  useEffect(() => { selectionRef.current = selection; }, [selection]);
+  const selectDragRef = useRef<
+    | { mode: "creating"; startX: number; startY: number; curX: number; curY: number; forCut: boolean }
+    | { mode: "moving"; grabDx: number; grabDy: number }
+    | null
+  >(null);
+  const dashOffsetRef = useRef(0);
 
   const undoStackRef = useRef<string[]>([]);
   const drawingRef = useRef(false);
@@ -185,9 +208,131 @@ function PaintPage() {
     if (stack.length > 30) stack.shift();
   }, []);
 
+  // ---------- Selection helpers ----------
+  const clearPreviewNow = useCallback(() => {
+    const p = previewRef.current;
+    if (!p) return;
+    const pctx = p.getContext("2d")!;
+    const rect = p.getBoundingClientRect();
+    pctx.clearRect(0, 0, rect.width, rect.height);
+  }, []);
+
+  const renderSelectionOverlay = useCallback(() => {
+    const p = previewRef.current;
+    if (!p) return;
+    const pctx = p.getContext("2d")!;
+    const rect = p.getBoundingClientRect();
+    pctx.clearRect(0, 0, rect.width, rect.height);
+    const sel = selectionRef.current;
+    if (sel) {
+      if (sel.lifted) {
+        pctx.drawImage(sel.bitmap, sel.sx + sel.dx, sel.sy + sel.dy, sel.sw, sel.sh);
+      }
+      pctx.save();
+      pctx.lineWidth = 2;
+      pctx.strokeStyle = "#0ea5e9";
+      pctx.setLineDash([6, 4]);
+      pctx.lineDashOffset = -dashOffsetRef.current;
+      pctx.strokeRect(sel.sx + sel.dx + 0.5, sel.sy + sel.dy + 0.5, sel.sw - 1, sel.sh - 1);
+      pctx.restore();
+    }
+    const sd = selectDragRef.current;
+    if (sd && sd.mode === "creating") {
+      const x = Math.min(sd.startX, sd.curX);
+      const y = Math.min(sd.startY, sd.curY);
+      const w = Math.abs(sd.curX - sd.startX);
+      const h = Math.abs(sd.curY - sd.startY);
+      pctx.save();
+      pctx.lineWidth = 2;
+      pctx.strokeStyle = sd.forCut ? "#ef4444" : "#0ea5e9";
+      pctx.setLineDash([6, 4]);
+      pctx.strokeRect(x + 0.5, y + 0.5, w, h);
+      pctx.restore();
+    }
+  }, []);
+
+  // Marching ants animation while a selection exists
+  useEffect(() => {
+    if (!selection) {
+      clearPreviewNow();
+      return;
+    }
+    let raf = 0;
+    const tick = () => {
+      dashOffsetRef.current = (dashOffsetRef.current + 0.5) % 10;
+      renderSelectionOverlay();
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [selection, renderSelectionOverlay, clearPreviewNow]);
+
+  const captureSelection = useCallback(
+    (sx: number, sy: number, sw: number, sh: number): Selection => {
+      const dpr = window.devicePixelRatio || 1;
+      const off = document.createElement("canvas");
+      off.width = Math.max(1, Math.round(sw * dpr));
+      off.height = Math.max(1, Math.round(sh * dpr));
+      const octx = off.getContext("2d")!;
+      octx.drawImage(
+        canvasRef.current!,
+        Math.round(sx * dpr), Math.round(sy * dpr),
+        Math.round(sw * dpr), Math.round(sh * dpr),
+        0, 0,
+        off.width, off.height,
+      );
+      return { sx, sy, sw, sh, dx: 0, dy: 0, bitmap: off, lifted: false };
+    },
+    [],
+  );
+
+  const commitSelection = useCallback(() => {
+    const sel = selectionRef.current;
+    if (!sel) return;
+    if (sel.lifted) {
+      const ctx = canvasRef.current!.getContext("2d")!;
+      ctx.drawImage(sel.bitmap, sel.sx + sel.dx, sel.sy + sel.dy, sel.sw, sel.sh);
+    }
+    selectionRef.current = null;
+    setSelection(null);
+    clearPreviewNow();
+  }, [clearPreviewNow]);
+
+  const recolorSelection = useCallback(
+    (hex: string) => {
+      const sel = selectionRef.current;
+      if (!sel) return;
+      pushUndo();
+      const ictx = sel.bitmap.getContext("2d")!;
+      const img = ictx.getImageData(0, 0, sel.bitmap.width, sel.bitmap.height);
+      const d = img.data;
+      const [nr, ng, nb] = hexToRgba(hex);
+      for (let i = 0; i < d.length; i += 4) {
+        const a = d[i + 3];
+        if (a === 0) continue;
+        const r = d[i], g = d[i + 1], b = d[i + 2];
+        if (r > 240 && g > 240 && b > 240) continue;
+        d[i] = nr; d[i + 1] = ng; d[i + 2] = nb;
+      }
+      ictx.putImageData(img, 0, 0);
+      if (!sel.lifted) {
+        const ctx = canvasRef.current!.getContext("2d")!;
+        ctx.save();
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(sel.sx, sel.sy, sel.sw, sel.sh);
+        ctx.restore();
+        sel.lifted = true;
+      }
+      setSelection({ ...sel });
+    },
+    [pushUndo],
+  );
+
   const undo = useCallback(() => {
     const stack = undoStackRef.current;
     if (!stack.length) return;
+    selectionRef.current = null;
+    setSelection(null);
     const snap = stack.pop()!;
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
@@ -202,6 +347,8 @@ function PaintPage() {
 
   const clearCanvas = useCallback(() => {
     pushUndo();
+    selectionRef.current = null;
+    setSelection(null);
     const canvas = canvasRef.current!;
     const ctx = canvas.getContext("2d")!;
     const rect = canvas.getBoundingClientRect();
@@ -212,6 +359,7 @@ function PaintPage() {
 
   // ---------- Tool selection ----------
   const selectTool = (t: Tool, ev?: React.MouseEvent<HTMLButtonElement>) => {
+    if (t !== tool) commitSelection();
     setTool(t);
     setTextInput(null);
     const meta = TOOLS.find((x) => x.id === t)!;
@@ -238,6 +386,59 @@ function PaintPage() {
     if (textInput) return;
     const pos = getPos(e);
     const ctx = canvasRef.current!.getContext("2d")!;
+
+    // Selection / cut tools
+    if (tool === "selecionar" || tool === "tesoura") {
+      const sel = selectionRef.current;
+      if (tool === "selecionar" && sel) {
+        const insideX = pos.x >= sel.sx + sel.dx && pos.x <= sel.sx + sel.dx + sel.sw;
+        const insideY = pos.y >= sel.sy + sel.dy && pos.y <= sel.sy + sel.dy + sel.sh;
+        if (insideX && insideY) {
+          if (!sel.lifted) {
+            pushUndo();
+            ctx.save();
+            ctx.fillStyle = "#ffffff";
+            ctx.fillRect(sel.sx, sel.sy, sel.sw, sel.sh);
+            ctx.restore();
+            sel.lifted = true;
+            setSelection({ ...sel });
+          } else {
+            pushUndo();
+          }
+          selectDragRef.current = {
+            mode: "moving",
+            grabDx: pos.x - (sel.sx + sel.dx),
+            grabDy: pos.y - (sel.sy + sel.dy),
+          };
+          (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+          return;
+        }
+        // Clicked outside → commit existing and start a new selection
+        commitSelection();
+      } else if (tool === "tesoura" && sel) {
+        // Cut the active selection
+        pushUndo();
+        if (!sel.lifted) {
+          ctx.save();
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(sel.sx, sel.sy, sel.sw, sel.sh);
+          ctx.restore();
+        }
+        selectionRef.current = null;
+        setSelection(null);
+        clearPreviewNow();
+        return;
+      }
+      selectDragRef.current = {
+        mode: "creating",
+        startX: pos.x, startY: pos.y,
+        curX: pos.x, curY: pos.y,
+        forCut: tool === "tesoura",
+      };
+      (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+      renderSelectionOverlay();
+      return;
+    }
 
     if (tool === "texto") {
       setTextInput({ x: pos.x, y: pos.y, value: "" });
@@ -275,6 +476,27 @@ function PaintPage() {
   };
 
   const onPointerMove = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const sd = selectDragRef.current;
+    if (sd) {
+      const pos = getPos(e);
+      if (sd.mode === "creating") {
+        sd.curX = pos.x; sd.curY = pos.y;
+        renderSelectionOverlay();
+      } else if (sd.mode === "moving") {
+        const sel = selectionRef.current;
+        if (!sel) return;
+        const container = containerRef.current!;
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        let newDx = pos.x - sd.grabDx - sel.sx;
+        let newDy = pos.y - sd.grabDy - sel.sy;
+        newDx = Math.min(Math.max(newDx, -sel.sx), cw - sel.sx - sel.sw);
+        newDy = Math.min(Math.max(newDy, -sel.sy), ch - sel.sy - sel.sh);
+        sel.dx = newDx; sel.dy = newDy;
+        renderSelectionOverlay();
+      }
+      return;
+    }
     if (!drawingRef.current) return;
     const pos = getPos(e);
     if (tool === "forma") {
@@ -287,6 +509,42 @@ function PaintPage() {
   };
 
   const onPointerUp = (e: React.PointerEvent<HTMLCanvasElement>) => {
+    const sd = selectDragRef.current;
+    if (sd) {
+      if (sd.mode === "creating") {
+        const container = containerRef.current!;
+        const cw = container.clientWidth;
+        const ch = container.clientHeight;
+        const sx = Math.max(0, Math.min(sd.startX, sd.curX));
+        const sy = Math.max(0, Math.min(sd.startY, sd.curY));
+        const ex = Math.min(cw, Math.max(sd.startX, sd.curX));
+        const ey = Math.min(ch, Math.max(sd.startY, sd.curY));
+        const sw = ex - sx;
+        const sh = ey - sy;
+        selectDragRef.current = null;
+        if (sw < 4 || sh < 4) {
+          clearPreviewNow();
+          return;
+        }
+        if (sd.forCut) {
+          pushUndo();
+          const ctx = canvasRef.current!.getContext("2d")!;
+          ctx.save();
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(sx, sy, sw, sh);
+          ctx.restore();
+          clearPreviewNow();
+        } else {
+          const newSel = captureSelection(sx, sy, sw, sh);
+          selectionRef.current = newSel;
+          setSelection(newSel);
+        }
+      } else {
+        selectDragRef.current = null;
+      }
+      return;
+    }
+
     if (!drawingRef.current) return;
     if (tool === "forma") {
       const pos = getPos(e);
@@ -426,6 +684,7 @@ function PaintPage() {
 
   // ---------- Print ----------
   const handlePrint = () => {
+    commitSelection();
     const dataUrl = canvasRef.current!.toDataURL("image/png");
     const w = window.open("", "_blank");
     if (!w) return;
@@ -617,7 +876,7 @@ function PaintPage() {
         {/* Toolbar */}
         <aside
           ref={asideRef}
-          className="relative flex flex-col gap-1.5 w-20 md:w-24 print:hidden"
+          className="relative flex flex-col gap-1 w-20 md:w-24 print:hidden"
         >
           {TOOLS.map((t) => (
             <ToolButton
@@ -641,7 +900,7 @@ function PaintPage() {
             <canvas
               ref={canvasRef}
               className="absolute inset-0"
-              style={{ touchAction: "none", cursor: tool === "texto" ? "text" : "crosshair" }}
+              style={{ touchAction: "none", cursor: tool === "texto" ? "text" : (tool === "selecionar" || tool === "tesoura") ? "crosshair" : "crosshair" }}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}
@@ -704,7 +963,10 @@ function PaintPage() {
               {COLORS.map((c) => (
                 <button
                   key={c.hex}
-                  onClick={() => setColor(c.hex)}
+                  onClick={() => {
+                    setColor(c.hex);
+                    if (selectionRef.current) recolorSelection(c.hex);
+                  }}
                   aria-label={c.name}
                   title={c.name}
                   className={`h-10 w-10 rounded-full shadow-md transition-transform ${
@@ -783,16 +1045,16 @@ function ToolButton({
   return (
     <button
       onClick={onClick}
-      className={`flex flex-col items-center justify-center gap-0.5 rounded-2xl p-1.5 shadow-sm transition-all ${
+      className={`flex flex-col items-center justify-center gap-0.5 rounded-xl py-1 px-1 shadow-sm transition-all ${
         active
           ? "bg-amber-300 ring-4 ring-amber-500 scale-105"
           : "bg-white hover:bg-amber-100"
       }`}
     >
-      <span className={`text-amber-700 ${active ? "scale-110" : ""}`}>
+      <span className={`text-amber-700 [&_svg]:w-5 [&_svg]:h-5 ${active ? "scale-110" : ""}`}>
         {icon}
       </span>
-      <span className="text-[11px] font-semibold text-slate-700 leading-tight">{label}</span>
+      <span className="text-[10px] font-semibold text-slate-700 leading-tight">{label}</span>
     </button>
   );
 }

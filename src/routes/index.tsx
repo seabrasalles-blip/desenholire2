@@ -900,7 +900,7 @@ function PaintPage() {
             <canvas
               ref={canvasRef}
               className="absolute inset-0"
-              style={{ touchAction: "none", cursor: tool === "texto" ? "text" : "crosshair" }}
+              style={{ touchAction: "none", cursor: tool === "texto" ? "text" : (tool === "selecionar" || tool === "tesoura") ? "crosshair" : "crosshair" }}
               onPointerDown={onPointerDown}
               onPointerMove={onPointerMove}
               onPointerUp={onPointerUp}

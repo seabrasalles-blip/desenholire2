@@ -132,7 +132,7 @@ function PaintPage() {
   const [started, setStarted] = useState(false);
 
   const [openPanel, setOpenPanel] = useState<Tool | null>(null);
-  const [panelTop, setPanelTop] = useState(0);
+  const [panelAnchor, setPanelAnchor] = useState<HTMLElement | null>(null);
   const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null);
   const [textBoxPos, setTextBoxPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
   const textBoxRef = useRef<HTMLDivElement | null>(null);

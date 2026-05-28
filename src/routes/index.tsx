@@ -860,7 +860,6 @@ function PaintPage() {
     return (
       <div
         ref={panelRef}
-        ref={panelRef}
         className="absolute z-30 rounded-2xl bg-white border-2 border-[#1B6CA7] p-4 w-60"
         style={{
           left: "calc(100% + 8px)",

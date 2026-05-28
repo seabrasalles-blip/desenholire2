@@ -119,7 +119,6 @@ function PaintPage() {
   const previewRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const asideRef = useRef<HTMLElement | null>(null);
-  const panelRef = useRef<HTMLDivElement | null>(null);
 
   const [tool, setTool] = useState<Tool>("pincel");
   const [color, setColor] = useState(COLORS[0].hex);

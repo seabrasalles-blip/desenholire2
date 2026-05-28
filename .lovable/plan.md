@@ -1,77 +1,36 @@
-# Ajustes de UI do Paint Infantil
+## Problema
 
-Objetivo: eliminar rolagem na barra lateral, transformar Carimbos/Formas em painéis flutuantes, adicionar ferramenta de Texto e reorganizar a barra inferior com paleta + ações.
+A caixa de texto da ferramenta Texto é posicionada exatamente em `(textInput.x, textInput.y)` dentro do container do canvas. Quando a criança clica perto da borda direita ou inferior, a caixa transborda e fica cortada.
 
-## 1. Barra lateral principal (sem rolagem)
+## Solução
 
-Lateral esquerda exibe somente os 8 botões grandes de ferramentas, distribuídos verticalmente sem `overflow-y-auto`:
+Aplicar um "clamp" na posição visual da caixa, sem mudar a posição lógica em que o texto será desenhado no canvas (essa também recebe um clamp leve só para que o texto inserido não saia da área de desenho).
 
-`Pincel · Lápis · Tinta · Borracha · Carimbos · Mágico · Formas · Texto`
+### Mudanças em `src/routes/index.tsx`
 
-Os sub-pickers contextuais (tamanho do pincel/borracha, escolha de carimbo/forma, tamanho do texto) saem da coluna e passam a aparecer como **painéis flutuantes** ao lado do botão ativo.
+1. **Medir a caixa após renderizar.** Adicionar `textBoxRef = useRef<HTMLDivElement>(null)` no overlay e um `useLayoutEffect` que, quando `textInput` muda, mede `offsetWidth/offsetHeight` da caixa e o tamanho do `containerRef` (canvas wrapper).
 
-## 2. Painéis flutuantes (Carimbos, Formas, Texto, Tamanhos)
+2. **Calcular posição clamped.** Novo estado `textBoxPos: { left: number; top: number }`:
+   - Margem de segurança `PAD = 8px`.
+   - `left = clamp(textInput.x, PAD, containerW - boxW - PAD)`
+   - `top  = clamp(textInput.y - 4, PAD, containerH - boxH - PAD)` (mantém o leve offset para cima já existente, mas dentro dos limites).
+   - Se o ponto clicado estiver muito perto do rodapé (`textInput.y + boxH + PAD > containerH`), posicionar a caixa ACIMA do ponto: `top = max(PAD, textInput.y - boxH - PAD)`.
+   - Fallback enquanto a medição não chega: usar `textInput.x, textInput.y` (primeiro frame), então o `useLayoutEffect` recalcula antes da pintura.
 
-- Posicionados absolutamente à direita do botão clicado (`left: 100%` da aside, top alinhado ao botão).
-- Visual: fundo branco, `rounded-2xl`, sombra suave, borda âmbar clara, padding generoso, botões grandes (≥56px).
-- Conteúdo:
-  - **Carimbos** — grid 4×2 com os 8 emojis (estrela, coração, flor, sol, lua, feliz, borboleta, foguete).
-  - **Formas** — grid 2×2 (círculo, quadrado, triângulo, retângulo).
-  - **Texto** — três botões de tamanho: Pequeno / Médio / Grande.
-  - **Pincel/Mágico** e **Borracha** — também migram para painel flutuante com os 3 tamanhos.
-- Comportamento:
-  - Abre ao selecionar a ferramenta correspondente.
-  - Ao escolher uma opção (carimbo/forma/tamanho), o painel fecha automaticamente e a ferramenta permanece ativa.
-  - Fecha ao clicar fora (listener global em `pointerdown` que ignora cliques no botão da ferramenta e no próprio painel).
-  - Fecha ao trocar para outra ferramenta.
-  - A opção atual fica destacada (ring âmbar).
+3. **Usar a posição clamped no JSX.** Trocar `left: textInput.x / top: textInput.y` por `left: textBoxPos.left / top: textBoxPos.top` e remover o `transform: translateY(-4px)` (o offset agora está embutido no cálculo).
 
-## 3. Ferramenta Texto
+4. **Clamp do ponto de desenho do texto.** Em `commitText`, antes do `ctx.fillText`, garantir que o texto também não saia do canvas:
+   - Medir largura aproximada do texto com `ctx.measureText(value).width` e a altura ≈ `TEXT_SIZES[textSize]`.
+   - `drawX = clamp(textInput.x, PAD, canvasW - textW - PAD)`
+   - `drawY = clamp(textInput.y, PAD, canvasH - textH - PAD)` (`textBaseline = "top"` já é usado).
+   - Desenhar em `(drawX, drawY)`.
 
-- Novo tipo `Tool = ... | "texto"`.
-- Estado novo: `textSize: "pequeno" | "medio" | "grande"` (24 / 40 / 64 px).
-- Fonte: `"Nunito", "Comic Sans MS", system-ui, sans-serif` (sem serifa, arredondada).
-- Fluxo:
-  1. Criança seleciona Texto → painel flutuante mostra os 3 tamanhos.
-  2. Ao clicar no canvas, abre um pequeno overlay posicionado no ponto clicado: `<input>` arredondado + botão ✓ Confirmar e ✕ Cancelar. Enter confirma, Esc cancela.
-  3. Ao confirmar, desenha o texto no canvas com `ctx.fillStyle = color`, `ctx.font = "${size}px Nunito,..."`, `textBaseline = "top"`. `pushUndo()` antes do desenho.
-- O texto vira parte do bitmap → aparece corretamente na impressão (que já usa `toDataURL`).
-- Enquanto o overlay de digitação estiver aberto, desativar os handlers normais de pointer no canvas.
+5. **Recalcular em resize.** O `ResizeObserver` já existente no `containerRef` dispara re-render do canvas; adicionar dependência para recomputar `textBoxPos` quando o container muda de tamanho enquanto o input está aberto.
 
-## 4. Barra inferior (recursos de apoio)
+### Critério de aceitação
 
-A faixa abaixo do canvas agrupa, da esquerda para a direita:
-
-`[Paleta de 8 cores]  [Cor surpresa 🎲]   |   [Desfazer]  [Limpar]  [Imprimir]`
-
-- Mesma linha em desktop/tablet; em telas estreitas, quebra em duas linhas (`flex-wrap`).
-- Botões grandes com ícone + rótulo em português (mantém o padrão atual).
-- Remove os botões de ação que hoje ficam embaixo do canvas separados — tudo num único rodapé.
-
-## 5. Layout responsivo
-
-- Aside fixa em `w-24` (mobile) / `w-28` (md) — apenas ícone+rótulo, 8 botões cabem sem rolagem em 600px de altura.
-- Painel flutuante usa `position: absolute` dentro de um wrapper relativo na aside, com `z-30`; largura ~220px para não cobrir muito do canvas.
-- Em viewports muito baixos, painel ganha `max-height` e rolagem interna própria (não a barra inteira).
-
-## 6. Detalhes técnicos
-
-Arquivo alterado: `src/routes/index.tsx` (único arquivo da página; mantém arquitetura atual sem fragmentar em vários componentes para reduzir risco).
-
-- Novo estado `openPanel: Tool | null` controla qual painel flutuante está aberto.
-- `setTool(t)` passa a abrir o painel se `t ∈ {pincel, lapis(?), borracha, carimbo, forma, magico, texto}` que tenham opções; ferramentas sem opções (lápis, tinta) fecham qualquer painel.
-- `useEffect` registra listener `pointerdown` no `document` para fechar o painel ao clicar fora (`ref` no painel + `ref` na aside).
-- Novo componente local `FloatingPanel` (function dentro do arquivo) que renderiza o card com título e children.
-- Novo overlay local `TextInputOverlay` posicionado em coordenadas do canvas.
-- Adicionar import de ícone `Type` do lucide-react para o botão Texto.
-- Função `drawText(ctx, text, x, y, size, color)` adicionada junto às outras primitivas.
-- `pushUndo()` chamado antes de inserir texto, carimbo ou forma — comportamento já existente é preservado.
-
-## Critério de aceitação
-
-- Barra lateral nunca apresenta rolagem em viewports ≥ 600px de altura.
-- Clicar em Carimbos/Formas abre painel ao lado, não empurra botões.
-- Escolher carimbo/forma fecha o painel e mantém ferramenta ativa.
-- Clicar fora do painel ou em outra ferramenta o fecha.
-- Texto pode ser inserido em 3 tamanhos, na cor ativa, e sai na impressão.
-- Paleta, cor surpresa, desfazer, limpar e imprimir ficam todos no rodapé, acessíveis sem rolar.
+- Clicar próximo à borda direita: caixa cola na borda direita com 8px de folga.
+- Clicar próximo à borda inferior: caixa aparece acima do ponto clicado, totalmente visível.
+- Clicar próximo às bordas esquerda/superior: caixa mantém ≥ 8px de margem.
+- Texto confirmado é desenhado dentro da área do canvas, mesmo se o clique tiver sido na beirada.
+- Funciona em desktop, tablet e mobile (698×606 e menores).

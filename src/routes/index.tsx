@@ -140,6 +140,8 @@ function PaintPage() {
   const [shape, setShape] = useState<Shape>("circulo");
   const [textSize, setTextSize] = useState<TextSize>("medio");
   const [confirmClear, setConfirmClear] = useState(false);
+  const [started, setStarted] = useState(false);
+
 
   const [openPanel, setOpenPanel] = useState<Tool | null>(null);
   const [panelTop, setPanelTop] = useState(0);

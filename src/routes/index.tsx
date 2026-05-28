@@ -684,6 +684,7 @@ function PaintPage() {
 
   // ---------- Print ----------
   const handlePrint = () => {
+    commitSelection();
     const dataUrl = canvasRef.current!.toDataURL("image/png");
     const w = window.open("", "_blank");
     if (!w) return;

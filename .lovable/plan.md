@@ -1,34 +1,36 @@
-## Diagnóstico
-O erro atual não é mais genérico de CSS: a rota `/` está quebrando porque o componente principal do Paint tenta renderizar `WelcomeScreen`, mas no runtime ele não existe no chunk gerado da rota.
+## Objetivo
+Fazer a rota `/` parar de cair na tela de erro, tanto na abertura inicial quanto alguns segundos depois da renderização.
 
-**Sinal confirmado nos logs:** `ReferenceError: WelcomeScreen is not defined at PaintPage`.
+## O que vou corrigir
+1. **Estabilizar a rota inicial no code splitting**
+   - Transformar `src/routes/index.tsx` em um arquivo mínimo de configuração da rota.
+   - Mover `PaintPage` para `src/routes/index.lazy.tsx` com `createLazyFileRoute("/")`.
+   - Isso evita o problema atual em que a rota está tentando renderizar `WelcomeScreen` e o runtime acusa `ReferenceError: WelcomeScreen is not defined`.
 
-**Arquivos isolados:**
-- `src/routes/index.tsx` — origem provável da quebra
-- `src/routes/__root.tsx` — apenas exibe o fallback “This page didn't load”
-- `src/router.tsx` — não parece ser a causa
+2. **Proteger os hooks que usam refs antes do canvas existir**
+   - Revisar os efeitos e helpers em `src/routes/index.tsx`/`index.lazy.tsx` que fazem acesso direto com `canvasRef.current!`, `previewRef.current!` e `containerRef.current!`.
+   - Adicionar guardas para só executar lógica de canvas quando `started === true` e quando os refs realmente existirem.
+   - Isso cobre o comportamento descrito por você de “abre por alguns segundos e depois quebra”.
 
-## Do I know what the issue is?
-**Sim.** O problema mais provável é um edge case do code splitting do TanStack Router nessa rota grande: helpers/componentes locais da mesma route file não estão ficando disponíveis quando `PaintPage` é extraído para o chunk da página.
+3. **Validar a abertura e transição da home**
+   - Conferir que a tela `WelcomeScreen` aparece sem cair no fallback.
+   - Conferir que o botão **Começar** abre a área de desenho sem erro.
+   - Confirmar que a rota `/` não volta para `This page didn't load`.
 
-## Plano
-1. **Blindar a route `/` contra o bug de code splitting**
-   - Tirar `WelcomeScreen` e os helpers visuais reutilizados de `src/routes/index.tsx`.
-   - Colocá-los em componentes/imports separados para que `PaintPage` não dependa de bindings locais frágeis no mesmo arquivo da rota.
-
-2. **Enxugar a route file principal**
-   - Manter em `src/routes/index.tsx` apenas a definição da rota, constantes realmente necessárias e o componente principal.
-   - Revisar referências locais que também possam quebrar depois (`ToolButton`, `ActionButton`, utilitários auxiliares).
-
-3. **Validar a home e o fluxo inicial**
-   - Confirmar que a tela de abertura carrega sem cair no `errorComponent`.
-   - Confirmar que o botão “Começar” abre a área de desenho normalmente.
-   - Revalidar preview responsivo básico após a correção.
+## Arquivos envolvidos
+- `src/routes/index.tsx`
+- `src/routes/index.lazy.tsx` (novo)
+- possivelmente `src/components/paint/WelcomeScreen.tsx` apenas se eu precisar ajustar import/export de forma cirúrgica
 
 ## Detalhes técnicos
-- A mensagem “This page didn't load” vem do `errorComponent` em `src/routes/__root.tsx`; ela é consequência, não a causa.
-- A correção mais segura é **extrair componentes auxiliares para arquivos próprios**, em vez de depender de funções locais dentro de uma route file grande com transformação de code split.
-- Se sobrar algum erro depois disso, o próximo alvo será qualquer outro helper local ainda usado por `PaintPage`.
+- Hoje há **dois riscos reais**:
+  - **Erro confirmado nos logs:** `ReferenceError: WelcomeScreen is not defined` em `src/routes/index.tsx:941`.
+  - **Risco adicional no cliente:** hooks da página acessam refs do canvas antes da tela de desenho estar montada (`useEffect` com `canvasRef.current!`, `previewRef.current!`, `containerRef.current!`).
+- A correção principal será usar o padrão recomendado do TanStack para separar a configuração crítica da rota do componente pesado/lazy.
+- Depois disso, vou endurecer a página contra refs nulas para eliminar o crash tardio.
 
 ## Resultado esperado
-A página inicial volta a abrir, a tela lúdica de entrada aparece corretamente e o Paint deixa de cair na tela de erro global.
+- A tela inicial abre normalmente.
+- Ela não cai sozinha após alguns segundos.
+- Clicar em **Começar** entra no ateliê sem erro.
+- A página deixa de exibir `This page didn't load`. 

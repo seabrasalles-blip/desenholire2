@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   Brush,
@@ -98,6 +98,8 @@ function PaintPage() {
   const [openPanel, setOpenPanel] = useState<Tool | null>(null);
   const [panelTop, setPanelTop] = useState(0);
   const [textInput, setTextInput] = useState<{ x: number; y: number; value: string } | null>(null);
+  const [textBoxPos, setTextBoxPos] = useState<{ left: number; top: number }>({ left: 0, top: 0 });
+  const textBoxRef = useRef<HTMLDivElement | null>(null);
 
   const undoStackRef = useRef<string[]>([]);
   const drawingRef = useRef(false);
@@ -151,6 +153,28 @@ function PaintPage() {
     document.addEventListener("pointerdown", handler);
     return () => document.removeEventListener("pointerdown", handler);
   }, [openPanel]);
+
+  // ---------- Clamp text input overlay inside canvas ----------
+  useLayoutEffect(() => {
+    if (!textInput) return;
+    const container = containerRef.current;
+    const box = textBoxRef.current;
+    if (!container || !box) return;
+    const PAD = 8;
+    const cw = container.clientWidth;
+    const ch = container.clientHeight;
+    const bw = box.offsetWidth;
+    const bh = box.offsetHeight;
+    const maxLeft = Math.max(PAD, cw - bw - PAD);
+    const maxTop = Math.max(PAD, ch - bh - PAD);
+    let left = Math.min(Math.max(textInput.x, PAD), maxLeft);
+    let top = textInput.y - 4;
+    if (textInput.y + bh + PAD > ch) {
+      top = Math.max(PAD, textInput.y - bh - PAD);
+    }
+    top = Math.min(Math.max(top, PAD), maxTop);
+    setTextBoxPos({ left, top });
+  }, [textInput]);
 
   // ---------- Undo helpers ----------
   const pushUndo = useCallback(() => {
@@ -382,11 +406,19 @@ function PaintPage() {
     if (value) {
       pushUndo();
       const ctx = canvasRef.current!.getContext("2d")!;
+      const container = containerRef.current!;
+      const cw = container.clientWidth;
+      const ch = container.clientHeight;
+      const PAD = 8;
       ctx.save();
       ctx.fillStyle = color;
       ctx.font = `bold ${TEXT_SIZES[textSize]}px ${TEXT_FONT}`;
       ctx.textBaseline = "top";
-      ctx.fillText(value, textInput.x, textInput.y);
+      const textW = ctx.measureText(value).width;
+      const textH = TEXT_SIZES[textSize];
+      const drawX = Math.min(Math.max(textInput.x, PAD), Math.max(PAD, cw - textW - PAD));
+      const drawY = Math.min(Math.max(textInput.y, PAD), Math.max(PAD, ch - textH - PAD));
+      ctx.fillText(value, drawX, drawY);
       ctx.restore();
     }
     setTextInput(null);
@@ -623,11 +655,11 @@ function PaintPage() {
             {/* Inline text input overlay */}
             {textInput && (
               <div
+                ref={textBoxRef}
                 className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-amber-400 shadow-lg p-1"
                 style={{
-                  left: textInput.x,
-                  top: textInput.y,
-                  transform: "translateY(-4px)",
+                  left: textBoxPos.left,
+                  top: textBoxPos.top,
                 }}
               >
                 <input

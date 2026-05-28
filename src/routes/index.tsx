@@ -77,18 +77,51 @@ const TEXT_SIZES: Record<TextSize, number> = { pequeno: 24, medio: 40, grande: 6
 const TEXT_FONT = '"Poppins",system-ui,sans-serif';
 
 
-const TOOLS: { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean }[] = [
-  { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
-  { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
-  { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
-  { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
-  { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
-  { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
-  { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
-  { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
-  { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
-  { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
+type ToolMeta = { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean };
+
+const TOOL_GROUPS: { title: string; tools: ToolMeta[] }[] = [
+  {
+    title: "Desenhar",
+    tools: [
+      { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
+      { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
+      { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
+      { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
+    ],
+  },
+  {
+    title: "Criar",
+    tools: [
+      { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
+      { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
+      { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
+      { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
+    ],
+  },
+  {
+    title: "Editar",
+    tools: [
+      { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
+      { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
+    ],
+  },
 ];
+
+const TOOLS: ToolMeta[] = TOOL_GROUPS.flatMap((g) => g.tools);
+
+const MICRO_HINTS: Record<Tool, string> = {
+  pincel: "Você escolheu: Pincel. Arraste no desenho para pintar.",
+  lapis: "Você escolheu: Lápis. Arraste para fazer traços finos.",
+  magico: "Você escolheu: Mágico. Arraste para pintar com várias cores.",
+  borracha: "Você escolheu: Borracha. Arraste para apagar partes do desenho.",
+  tinta: "Você escolheu: Tinta. Toque em uma área fechada para preencher.",
+  carimbo: "Você escolheu: Carimbos. Escolha um carimbo e toque no desenho.",
+  forma: "Você escolheu: Formas. Escolha uma forma e toque no desenho.",
+  texto: "Você escolheu: Texto. Toque onde quer escrever.",
+  selecionar: "Você escolheu: Selecionar. Marque uma parte para mover ou mudar a cor.",
+  tesoura: "Você escolheu: Tesoura. Marque uma parte para recortar.",
+};
+
 
 // ---------- Page ----------
 function PaintPage() {

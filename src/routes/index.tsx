@@ -937,7 +937,8 @@ function PaintPage() {
 
   return (
 
-    <div className="flex h-screen w-screen flex-col overflow-hidden bg-[#F5F8FF]">
+    <div className="flex h-dvh w-screen flex-col overflow-hidden bg-[#F5F8FF]">
+
       {/* Header */}
       <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden">
         <img src={paintLogo} alt="" className="h-7 w-7" />

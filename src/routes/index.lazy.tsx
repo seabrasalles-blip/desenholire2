@@ -5,6 +5,7 @@ import { WelcomeScreen } from "@/components/paint/WelcomeScreen";
 import { ToolButton } from "@/components/paint/ToolButton";
 import { ActionButton } from "@/components/paint/ActionButton";
 import { hslToHex } from "@/lib/colorUtils";
+import { ToolPanel } from "@/components/paint/ToolPanel";
 
 import {
   Brush,

@@ -963,7 +963,10 @@ function PaintPage() {
               {COLORS.map((c) => (
                 <button
                   key={c.hex}
-                  onClick={() => setColor(c.hex)}
+                  onClick={() => {
+                    setColor(c.hex);
+                    if (selectionRef.current) recolorSelection(c.hex);
+                  }}
                   aria-label={c.name}
                   title={c.name}
                   className={`h-10 w-10 rounded-full shadow-md transition-transform ${

@@ -70,35 +70,24 @@ const TEXT_FONT = '"Poppins",system-ui,sans-serif';
 
 type ToolMeta = { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean };
 
-const TOOL_GROUPS: { title: string; tools: ToolMeta[] }[] = [
-  {
-    title: "Desenhar",
-    tools: [
-      { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
-      { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
-      { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
-      { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
-    ],
-  },
-  {
-    title: "Criar",
-    tools: [
-      { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
-      { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
-      { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
-      { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
-    ],
-  },
-  {
-    title: "Editar",
-    tools: [
-      { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
-      { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
-    ],
-  },
+const LEFT_TOOLS: ToolMeta[] = [
+  { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
+  { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
+  { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
+  { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
+  { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
+  { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
+  { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
+  { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
 ];
 
-const TOOLS: ToolMeta[] = TOOL_GROUPS.flatMap((g) => g.tools);
+const RIGHT_TOOLS: ToolMeta[] = [
+  { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
+  { id: "tesoura", label: "Tesoura", icon: <Scissors />, hasPanel: false },
+];
+
+const TOOLS: ToolMeta[] = [...LEFT_TOOLS, ...RIGHT_TOOLS];
+
 
 const MICRO_HINTS: Record<Tool, string> = {
   pincel: "Você escolheu: Pincel. Arraste no desenho para pintar.",

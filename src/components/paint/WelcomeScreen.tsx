@@ -54,11 +54,11 @@ export function WelcomeScreen({ onStart }: { onStart: () => void }) {
 
             <div className="flex items-center gap-3 rounded-2xl bg-[#FFF8EE] border border-[#F4DCB0] p-2.5 sm:p-3 shadow-sm">
               <div className="w-9 h-9 rounded-xl bg-[#FFF2DC] flex items-center justify-center text-lg shrink-0">
-                ☀️
+               ✨
               </div>
               <div className="text-sm leading-snug min-w-0">
                 <p className="font-bold text-[#DC8F20]">Desafio de hoje:</p>
-                <p className="text-[#00113C] truncate">desenhe algo que te faz feliz!</p>
+                <p className="text-[#00113C] truncate">Desenhe algo que te faz feliz!</p>
               </div>
               <Pencil className="hidden sm:block w-5 h-5 text-[#DC8F20] ml-auto shrink-0" />
             </div>

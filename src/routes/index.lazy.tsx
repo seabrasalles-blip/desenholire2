@@ -918,139 +918,141 @@ function PaintPage() {
 
   return (
     <div className="flex h-dvh w-screen flex-col overflow-hidden bg-[#F5F8FF]">
-      {/* Header */}
-      <header className="flex items-center justify-center gap-2 py-1.5 px-3 bg-[#00113C] text-white print:hidden shrink-0">
+      {/* Header — altura compacta 44-52px */}
+      <header className="flex items-center justify-center gap-2 py-2 px-3 bg-[#00113C] text-white print:hidden shrink-0 h-[52px]">
         <img src={paintLogo} alt="" className="h-6 w-6" />
         <h1 className="text-base md:text-lg font-semibold tracking-tight">
           Ateliê de Desenho
         </h1>
       </header>
 
-      <div className="flex flex-1 min-h-0 gap-2 px-2 pt-2 overflow-hidden">
-        {/* Left sidebar — criação */}
-        <aside
-          ref={asideRef}
-          className="relative flex flex-col gap-1 w-16 md:w-20 print:hidden min-h-0 overflow-y-auto shrink-0"
-        >
-          <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
-            Criar
-          </p>
-          {LEFT_TOOLS.map((t) => (
-            <ToolButton
-              key={t.id}
-              icon={t.icon}
-              label={t.label}
-              active={tool === t.id}
-              onClick={(ev) => selectTool(t.id, ev)}
-            />
-          ))}
-        </aside>
-        {renderPanel()}
-
-        {/* Canvas area (centered, constrained width) */}
-        <main className="flex-1 flex flex-col items-center gap-1.5 min-w-0 min-h-0">
-          {/* Microinstruction */}
-          <div className="w-full max-w-[min(65%,900px)] rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1 text-xs md:text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden shrink-0 max-h-[600px]:hidden">
-            <Sparkles className="w-4 h-4 text-[#DC8F20] shrink-0" />
-            <span className="truncate">{MICRO_HINTS[tool]}</span>
-          </div>
-
-          <div
-            ref={containerRef}
-            className="relative w-full max-w-[min(65%,900px)] flex-1 min-h-0 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
-            id="paint-canvas-container"
+      {/* Main layout — grid com 3 colunas centralizado */}
+      <div className="flex-1 flex justify-center items-stretch overflow-hidden bg-[#F5F8FF]">
+        <div className="flex gap-2 min-h-0 min-w-0">
+          {/* Left sidebar — criação (96-112px) */}
+          <aside
+            ref={asideRef}
+            className="relative flex flex-col gap-1 w-24 print:hidden min-h-0 overflow-y-auto shrink-0"
           >
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0"
-              style={{
-                touchAction: "none",
-                cursor:
-                  tool === "texto"
-                    ? "text"
-                    : tool === "selecionar" || tool === "tesoura"
-                    ? "crosshair"
-                    : "crosshair",
-              }}
-              onPointerDown={onPointerDown}
-              onPointerMove={onPointerMove}
-              onPointerUp={onPointerUp}
-              onPointerCancel={onPointerUp}
-            />
-            <canvas
-              ref={previewRef}
-              className="absolute inset-0 pointer-events-none"
-            />
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
+              Criar
+            </p>
+            {LEFT_TOOLS.map((t) => (
+              <ToolButton
+                key={t.id}
+                icon={t.icon}
+                label={t.label}
+                active={tool === t.id}
+                onClick={(ev) => selectTool(t.id, ev)}
+              />
+            ))}
+          </aside>
 
-            {/* Inline text input overlay */}
-            {textInput && (
-              <div
-                ref={textBoxRef}
-                className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-[#004ECC] shadow-lg p-1"
+          {renderPanel()}
+
+          {/* Canvas area — centralizado e constrained */}
+          <main className="flex flex-col items-center gap-1.5 min-w-0 min-h-0" style={{ width: "min(64vw, 980px)", minWidth: "680px" }}>
+            {/* Microinstruction */}
+            <div className="w-full rounded-xl bg-[#EAF0F9] border border-[#C9D7EC] px-3 py-1 text-xs md:text-sm font-medium text-[#00113C] flex items-center gap-2 print:hidden shrink-0">
+              <Sparkles className="w-4 h-4 text-[#DC8F20] shrink-0" />
+              <span className="truncate">{MICRO_HINTS[tool]}</span>
+            </div>
+
+            <div
+              ref={containerRef}
+              className="relative flex-1 w-full min-h-0 rounded-2xl bg-white shadow-lg border-2 border-[#1B6CA7] overflow-hidden"
+              id="paint-canvas-container"
+            >
+              <canvas
+                ref={canvasRef}
+                className="absolute inset-0"
                 style={{
-                  left: textBoxPos.left,
-                  top: textBoxPos.top,
+                  touchAction: "none",
+                  cursor:
+                    tool === "texto"
+                      ? "text"
+                      : tool === "selecionar" || tool === "tesoura"
+                      ? "crosshair"
+                      : "crosshair",
                 }}
-              >
-                <input
-                  autoFocus
-                  value={textInput.value}
-                  onChange={(e) =>
-                    setTextInput({ ...textInput, value: e.target.value })
-                  }
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") commitText();
-                    else if (e.key === "Escape") setTextInput(null);
-                  }}
-                  placeholder="Digite aqui..."
-                  className="px-2 py-1 outline-none text-[#00113C] font-semibold bg-transparent"
-                  style={{
-                    fontFamily: TEXT_FONT,
-                    fontSize: Math.min(TEXT_SIZES[textSize], 28),
-                    minWidth: 160,
-                  }}
-                />
-                <button
-                  onClick={commitText}
-                  aria-label="Confirmar"
-                  className="rounded-lg bg-[#DC8F20] hover:bg-[#c47e18] text-white p-2"
-                >
-                  <Check className="w-5 h-5" />
-                </button>
-                <button
-                  onClick={() => setTextInput(null)}
-                  aria-label="Cancelar"
-                  className="rounded-lg border-2 border-[#0035BB] text-[#0035BB] hover:bg-[#E6EEFB] p-1.5"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-          </div>
-        </main>
+                onPointerDown={onPointerDown}
+                onPointerMove={onPointerMove}
+                onPointerUp={onPointerUp}
+                onPointerCancel={onPointerUp}
+              />
+              <canvas
+                ref={previewRef}
+                className="absolute inset-0 pointer-events-none"
+              />
 
-        {/* Right sidebar — edição */}
-        <aside
-          className="relative flex flex-col gap-1 w-16 md:w-20 print:hidden min-h-0 overflow-y-auto shrink-0"
-        >
-          <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
-            Editar
-          </p>
-          {RIGHT_TOOLS.map((t) => (
-            <ToolButton
-              key={t.id}
-              icon={t.icon}
-              label={t.label}
-              active={tool === t.id}
-              onClick={(ev) => selectTool(t.id, ev)}
-            />
-          ))}
-        </aside>
+              {/* Inline text input overlay */}
+              {textInput && (
+                <div
+                  ref={textBoxRef}
+                  className="absolute z-20 flex items-center gap-1 rounded-xl bg-white border-2 border-[#004ECC] shadow-lg p-1"
+                  style={{
+                    left: textBoxPos.left,
+                    top: textBoxPos.top,
+                  }}
+                >
+                  <input
+                    autoFocus
+                    value={textInput.value}
+                    onChange={(e) =>
+                      setTextInput({ ...textInput, value: e.target.value })
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") commitText();
+                      else if (e.key === "Escape") setTextInput(null);
+                    }}
+                    placeholder="Digite aqui..."
+                    className="px-2 py-1 outline-none text-[#00113C] font-semibold bg-transparent"
+                    style={{
+                      fontFamily: TEXT_FONT,
+                      fontSize: Math.min(TEXT_SIZES[textSize], 28),
+                      minWidth: 160,
+                    }}
+                  />
+                  <button
+                    onClick={commitText}
+                    aria-label="Confirmar"
+                    className="rounded-lg bg-[#DC8F20] hover:bg-[#c47e18] text-white p-2"
+                  >
+                    <Check className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setTextInput(null)}
+                    aria-label="Cancelar"
+                    className="rounded-lg border-2 border-[#0035BB] text-[#0035BB] hover:bg-[#E6EEFB] p-1.5"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              )}
+            </div>
+          </main>
+
+          {/* Right sidebar — edição (96-112px) */}
+          <aside className="relative flex flex-col gap-1 w-24 print:hidden min-h-0 overflow-y-auto shrink-0">
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
+              Editar
+            </p>
+            {RIGHT_TOOLS.map((t) => (
+              <ToolButton
+                key={t.id}
+                icon={t.icon}
+                label={t.label}
+                active={tool === t.id}
+                onClick={(ev) => selectTool(t.id, ev)}
+              />
+            ))}
+          </aside>
+        </div>
       </div>
 
-      {/* Bottom support bar: palette + actions (full width) */}
-      <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 mx-2 mb-2 mt-2 rounded-2xl bg-white border-2 border-[#C9D7EC] px-2 py-1.5 print:hidden shrink-0">
-        <div className="flex flex-wrap items-center justify-center gap-1.5">
+      {/* Bottom support bar — compacta (56-64px) */}
+      <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 px-2 py-2 bg-white border-t border-[#C9D7EC] print:hidden shrink-0 h-16">
+        <div className="flex flex-wrap items-center justify-center gap-1">
           {COLORS.map((c) => (
             <button
               key={c.hex}
@@ -1060,39 +1062,37 @@ function PaintPage() {
               }}
               aria-label={c.name}
               title={c.name}
-              className={`h-8 w-8 rounded-full shadow-md transition-transform ${
+              className={`h-6 w-6 rounded-full shadow-sm transition-transform shrink-0 ${
                 color === c.hex
-                  ? "ring-4 ring-[#DC8F20] scale-110"
-                  : "ring-2 ring-[#C9D7EC] hover:scale-105"
+                  ? "ring-3 ring-[#DC8F20] scale-110"
+                  : "ring-1 ring-[#C9D7EC] hover:scale-105"
               }`}
               style={{ backgroundColor: c.hex }}
             />
           ))}
           <button
             onClick={surpriseColor}
-            className="h-8 px-2.5 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-md flex items-center gap-1 hover:scale-105 transition text-xs"
+            className="h-6 px-2 rounded-full bg-[#A000A0] hover:bg-[#860086] text-white font-semibold shadow-sm flex items-center gap-0.5 hover:scale-105 transition text-[10px] shrink-0"
           >
-            <Dices className="h-3.5 w-3.5" /> Cor surpresa
+            <Dices className="h-3 w-3" /> <span className="hidden sm:inline">Cor</span>
           </button>
           <div
-            className="h-8 w-8 rounded-xl border-2 border-[#1B6CA7] shadow-inner"
+            className="h-6 w-6 rounded-lg border border-[#1B6CA7] shadow-inner shrink-0"
             style={{ backgroundColor: color }}
             aria-label="Cor atual"
             title="Cor atual"
           />
         </div>
 
-        <div className="h-7 w-px bg-[#C9D7EC] hidden md:block" />
+        <div className="h-5 w-px bg-[#C9D7EC] hidden md:block" />
 
-        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+        <div className="flex items-center justify-center gap-1 flex-wrap">
           <ActionButton onClick={undo} icon={<Undo2 />} label="Desfazer" variant="secondary" />
           <ActionButton onClick={() => setConfirmClear(true)} icon={<Trash2 />} label="Limpar" variant="outline" />
           <ActionButton onClick={handleSave} icon={<Download />} label="Salvar" variant="primary" />
           <ActionButton onClick={handlePrint} icon={<Printer />} label="Imprimir" variant="secondary" />
         </div>
       </div>
-
-
 
       {/* Confirm clear modal */}
       {confirmClear && (

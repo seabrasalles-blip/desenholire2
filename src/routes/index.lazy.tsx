@@ -1061,22 +1061,25 @@ function PaintPage() {
 
           {/* Right sidebar — edição (96-112px) */}
           <aside className="relative flex flex-col w-24 print:hidden min-h-0 shrink-0">
-            {/* Title area */}
-            <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none shrink-0 py-1 max-h-[700px]:hidden">
-              Editar
-            </p>
-            
-            {/* Flex container for tools — centered vertically */}
-            <div className="flex flex-col flex-1 min-h-0 justify-center items-center gap-1">
-              {RIGHT_TOOLS.map((t) => (
-                <ToolButton
-                  key={t.id}
-                  icon={t.icon}
-                  label={t.label}
-                  active={tool === t.id}
-                  onClick={(ev) => selectTool(t.id, ev)}
-                />
-              ))}
+            {/* Flex container wrapping title + tools block — centered vertically in aside */}
+            <div className="flex flex-col flex-1 min-h-0 justify-center items-center gap-2">
+              {/* Title area */}
+              <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none shrink-0 max-h-[700px]:hidden">
+                Editar
+              </p>
+              
+              {/* Edit tools group */}
+              <div className="flex flex-col gap-1">
+                {RIGHT_TOOLS.map((t) => (
+                  <ToolButton
+                    key={t.id}
+                    icon={t.icon}
+                    label={t.label}
+                    active={tool === t.id}
+                    onClick={(ev) => selectTool(t.id, ev)}
+                  />
+                ))}
+              </div>
             </div>
           </aside>
         </div>

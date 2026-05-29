@@ -70,16 +70,22 @@ const TEXT_FONT = '"Poppins",system-ui,sans-serif';
 
 type ToolMeta = { id: Tool; label: string; icon: React.ReactNode; hasPanel: boolean };
 
-const LEFT_TOOLS: ToolMeta[] = [
+// Left tools organized into groups
+const DRAW_TOOLS: ToolMeta[] = [
   { id: "pincel", label: "Pincel", icon: <Brush />, hasPanel: true },
   { id: "lapis", label: "Lápis", icon: <Pencil />, hasPanel: false },
   { id: "magico", label: "Mágico", icon: <Sparkles />, hasPanel: true },
   { id: "borracha", label: "Borracha", icon: <Eraser />, hasPanel: true },
+];
+
+const CREATE_TOOLS: ToolMeta[] = [
   { id: "tinta", label: "Tinta", icon: <PaintBucket />, hasPanel: false },
   { id: "carimbo", label: "Carimbos", icon: <StampIcon />, hasPanel: true },
   { id: "forma", label: "Formas", icon: <Shapes />, hasPanel: true },
   { id: "texto", label: "Texto", icon: <Type />, hasPanel: true },
 ];
+
+const LEFT_TOOLS: ToolMeta[] = [...DRAW_TOOLS, ...CREATE_TOOLS];
 
 const RIGHT_TOOLS: ToolMeta[] = [
   { id: "selecionar", label: "Selecionar", icon: <MousePointerSquareDashed />, hasPanel: false },
@@ -932,20 +938,41 @@ function PaintPage() {
           {/* Left sidebar — criação (96-112px) */}
           <aside
             ref={asideRef}
-            className="relative flex flex-col gap-1 w-24 print:hidden min-h-0 overflow-y-auto shrink-0"
+            className="relative flex flex-col w-24 print:hidden min-h-0 shrink-0"
           >
-            <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
+            {/* Title area */}
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none shrink-0 py-1 max-h-[700px]:hidden">
               Criar
             </p>
-            {LEFT_TOOLS.map((t) => (
-              <ToolButton
-                key={t.id}
-                icon={t.icon}
-                label={t.label}
-                active={tool === t.id}
-                onClick={(ev) => selectTool(t.id, ev)}
-              />
-            ))}
+            
+            {/* Flex container for tool groups with space distribution */}
+            <div className="flex flex-col flex-1 min-h-0 justify-between gap-2 py-2">
+              {/* Draw tools group */}
+              <div className="flex flex-col gap-1">
+                {DRAW_TOOLS.map((t) => (
+                  <ToolButton
+                    key={t.id}
+                    icon={t.icon}
+                    label={t.label}
+                    active={tool === t.id}
+                    onClick={(ev) => selectTool(t.id, ev)}
+                  />
+                ))}
+              </div>
+
+              {/* Create tools group */}
+              <div className="flex flex-col gap-1">
+                {CREATE_TOOLS.map((t) => (
+                  <ToolButton
+                    key={t.id}
+                    icon={t.icon}
+                    label={t.label}
+                    active={tool === t.id}
+                    onClick={(ev) => selectTool(t.id, ev)}
+                  />
+                ))}
+              </div>
+            </div>
           </aside>
 
           {renderPanel()}
@@ -1033,19 +1060,24 @@ function PaintPage() {
           </main>
 
           {/* Right sidebar — edição (96-112px) */}
-          <aside className="relative flex flex-col gap-1 w-24 print:hidden min-h-0 overflow-y-auto shrink-0">
-            <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none max-h-[700px]:hidden">
+          <aside className="relative flex flex-col w-24 print:hidden min-h-0 shrink-0">
+            {/* Title area */}
+            <p className="text-[9px] font-bold uppercase tracking-wider text-[#1B6CA7] text-center leading-none shrink-0 py-1 max-h-[700px]:hidden">
               Editar
             </p>
-            {RIGHT_TOOLS.map((t) => (
-              <ToolButton
-                key={t.id}
-                icon={t.icon}
-                label={t.label}
-                active={tool === t.id}
-                onClick={(ev) => selectTool(t.id, ev)}
-              />
-            ))}
+            
+            {/* Flex container for tools — centered vertically */}
+            <div className="flex flex-col flex-1 min-h-0 justify-center items-center gap-1">
+              {RIGHT_TOOLS.map((t) => (
+                <ToolButton
+                  key={t.id}
+                  icon={t.icon}
+                  label={t.label}
+                  active={tool === t.id}
+                  onClick={(ev) => selectTool(t.id, ev)}
+                />
+              ))}
+            </div>
           </aside>
         </div>
       </div>
